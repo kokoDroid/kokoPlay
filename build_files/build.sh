@@ -32,7 +32,7 @@ dnf5 install -y /rpms/*.rpm
 
 # this installs a package from fedora repos
 dnf5 install -y tmux 
-dnf5 clean all
+#dnf5 clean all
 
 # Use a COPR Example:
 #
