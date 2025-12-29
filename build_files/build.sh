@@ -17,8 +17,8 @@ EOF
 
 # Install Brave
 dnf5 install -y brave-browser
-dnf5 install -y adwaita-gtk3 cantarell-fonts
-dnf5 install -y gtk4
+dnf5 install -y adw-gtk3-theme abattis-cantarell-fonts
+#dnf5 install -y gtk4
 
 
 dnf5 install -y /rpms/*.rpm
