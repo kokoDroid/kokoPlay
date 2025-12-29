@@ -2,28 +2,31 @@
 
 set -ouex pipefail
 
-# Ensure /opt exists (safe on uBlue)
-[ -d /opt ] || install -d -m 755 /opt
 
 ### Install packages
-#!/usr/bin/env bash
 # Add Brave GPG key
 rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 
-# Add Brave repo
-cat << 'EOF' > /etc/yum.repos.d/brave-browser.repo
+# 1️⃣ Add tmpfiles rule for /opt → /var/opt
+mkdir -p /usr/lib/tmpfiles.d
+cat > /usr/lib/tmpfiles.d/opt.conf << 'EOF'
+L /opt - - - - /var/opt
+EOF
+
+# 2️⃣ Add Brave repo
+cat > /etc/yum.repos.d/brave-browser.repo << 'EOF'
 [brave-browser]
 name=Brave Browser
-baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/
+baseurl=https://brave-browser-rpm-release.s3.brave.com/
 enabled=1
 gpgcheck=1
 gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 EOF
 
-# Install Brave
-#mkdir -p /opt
-#chmod 755 /opt
-dnf5 install -y brave-browser
+# 3️⃣ Install Brave via rpm-ostree
+rpm-ostree install brave-browser
+
+
 dnf5 install -y /rpms/*.rpm
 
 # Clean
