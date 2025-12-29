@@ -2,11 +2,21 @@
 
 set -ouex pipefail
 
+# Add Brave repo
+cat > /etc/yum.repos.d/brave-browser.repo << 'EOF'
+[brave-browser]
+name=Brave Browser
+baseurl=https://brave-browser-rpm-release.s3.brave.com/
+enabled=1
+gpgcheck=1
+gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+EOF
 
+# Install Brave
+dnf5 install -y brave-browser
 dnf5 install -y /rpms/*.rpm
 
-# Clean
-#dnf5 clean all
+
 
 # Packages can be installed from any enabled yum repo on the image.
 # RPMfusion repos are available by default in ublue main images
