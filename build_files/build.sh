@@ -4,22 +4,21 @@ set -ouex pipefail
 
 ### Install packages
 #!/usr/bin/env bash
+# Add Brave GPG key
+rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 
-# Add Microsoft GPG key
-rpm --import https://packages.microsoft.com/keys/microsoft.asc
-
-# Add VS Code repo
-cat << 'EOF' > /etc/yum.repos.d/vscode.repo
-[code]
-name=Visual Studio Code
-baseurl=https://packages.microsoft.com/yumrepos/vscode
+# Add Brave repo
+cat << 'EOF' > /etc/yum.repos.d/brave-browser.repo
+[brave-browser]
+name=Brave Browser
+baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/
 enabled=1
 gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 EOF
 
-# Install VS Code
-dnf5 install -y code
+# Install Brave
+dnf5 install -y brave-browser
 dnf5 install -y /rpms/*.rpm
 
 # Clean
