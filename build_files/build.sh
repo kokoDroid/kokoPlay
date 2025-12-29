@@ -20,8 +20,8 @@ rpm --import https://download.docker.com/linux/fedora/gpg
 # Install Brave
 #dnf5 install -y brave-browser
 dnf5 install -y adw-gtk3-theme abattis-cantarell-fonts
-dnf5 reinstall -y pango pango-devel
-
+dnf5 reinstall -y pango
+dnf5 install -y pango-devel
 #dnf5 install -y gtk4
 
 
