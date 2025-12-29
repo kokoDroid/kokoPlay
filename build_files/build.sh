@@ -3,30 +3,6 @@
 set -ouex pipefail
 
 
-### Install packages
-# Add Brave GPG key
-rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-
-# 1️⃣ Add tmpfiles rule for /opt → /var/opt
-mkdir -p /usr/lib/tmpfiles.d
-cat > /usr/lib/tmpfiles.d/opt.conf << 'EOF'
-L /opt - - - - /var/opt
-EOF
-
-# 2️⃣ Add Brave repo
-cat > /etc/yum.repos.d/brave-browser.repo << 'EOF'
-[brave-browser]
-name=Brave Browser
-baseurl=https://brave-browser-rpm-release.s3.brave.com/
-enabled=1
-gpgcheck=1
-gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-EOF
-
-# 3️⃣ Install Brave via rpm-ostree
-dnf5 install -y brave-browser
-
-
 dnf5 install -y /rpms/*.rpm
 
 # Clean
