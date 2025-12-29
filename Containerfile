@@ -6,9 +6,10 @@ COPY rpms /rpms
 # Base Image
 FROM ghcr.io/ublue-os/bazzite:stable
 
+COPY system_files/ /
 # Copy files from the first stage
 COPY --from=ctx /rpms /rpms
-#COPY --from=ctx /build_files /build_files
+
 
 ## Other possible base images include:
 # FROM ghcr.io/ublue-os/bazzite:latest
