@@ -24,7 +24,7 @@ gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 EOF
 
 # 3️⃣ Install Brave via rpm-ostree
-rpm-ostree install brave-browser
+dnf5 install -y brave-browser
 
 
 dnf5 install -y /rpms/*.rpm
