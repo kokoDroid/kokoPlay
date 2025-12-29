@@ -4,21 +4,22 @@ set -ouex pipefail
 
 # Import Brave signing key
 rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+rpm --import https://packages.microsoft.com/keys/microsoft.asc
+rpm --import https://download.docker.com/linux/fedora/gpg
 
 # Add Brave repo (CORRECT URL)
-cat > /etc/yum.repos.d/brave-browser.repo << 'EOF'
-[brave-browser]
-name=Brave Browser
-baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/
-enabled=1
-gpgcheck=1
-gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-EOF
+#cat > /etc/yum.repos.d/brave-browser.repo << 'EOF'
+#[brave-browser]
+#name=Brave Browser
+#baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/
+#enabled=1
+#gpgcheck=1
+#gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+#EOF
 
 # Install Brave
-dnf5 install -y brave-browser
+#dnf5 install -y brave-browser
 dnf5 install -y adw-gtk3-theme abattis-cantarell-fonts
-dnf5 install -y pango pango-graphite2 pango-modules cairo cairo-gobject
 
 #dnf5 install -y gtk4
 
