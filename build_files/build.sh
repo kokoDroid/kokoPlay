@@ -2,6 +2,9 @@
 
 set -ouex pipefail
 
+# Ensure /opt exists (safe on uBlue)
+[ -d /opt ] || install -d -m 755 /opt
+
 ### Install packages
 #!/usr/bin/env bash
 # Add Brave GPG key
@@ -18,8 +21,8 @@ gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 EOF
 
 # Install Brave
-mkdir -p /opt
-chmod 755 /opt
+#mkdir -p /opt
+#chmod 755 /opt
 dnf5 install -y brave-browser
 dnf5 install -y /rpms/*.rpm
 
