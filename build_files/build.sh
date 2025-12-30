@@ -24,13 +24,14 @@ dnf5 reinstall -y pango
 dnf5 install -y pango-devel
 dnf5 install -y icu
 
-mkdir -p /usr/lib64/locale
+#mkdir -p /usr/lib64/locale
 
-dnf5 install -y glibc-locale-source glibc-all-langpacks
+#dnf5 install -y glibc-locale-source glibc-all-langpacks
+dnf5 install -y glibc-langpack-en
 
 # Generate locale archive for English UTF-8
-localedef -i en_US -f UTF-8 /usr/lib64/locale/en_US.utf8
-localedef -v -c -i en_US -f UTF-8 /usr/lib64/locale/locale-archive
+#localedef -i en_US -f UTF-8 /usr/lib64/locale/en_US.utf8
+#localedef -v -c -i en_US -f UTF-8 /usr/lib64/locale/locale-archive
 
 #dnf5 install -y gtk4
 
