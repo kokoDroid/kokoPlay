@@ -23,6 +23,11 @@ dnf5 install -y adw-gtk3-theme abattis-cantarell-fonts
 dnf5 reinstall -y pango
 dnf5 install -y pango-devel
 dnf5 install -y icu
+dnf5 install -y glibc-locale-source glibc-all-langpacks
+
+# Generate locale archive for English UTF-8
+localedef -i en_US -f UTF-8 /usr/lib64/locale/en_US.utf8
+localedef -v -c -i en_US -f UTF-8 /usr/lib64/locale/locale-archive
 
 #dnf5 install -y gtk4
 
