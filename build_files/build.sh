@@ -7,6 +7,28 @@ cat > /usr/lib/tmpfiles.d/fontconfig.conf <<'EOF'
 d /var/cache/fontconfig 0755 root root -
 EOF
 
+# Clean cache early
+rm -rf /var/cache/*
+
+# Ensure fontconfig cache dir exists
+mkdir -p /var/cache/fontconfig
+chmod 1777 /var/cache/fontconfig
+
+# Fontconfig config
+mkdir -p /etc/fonts/conf.d
+cat > /etc/fonts/conf.d/99-local-fonts.conf <<'EOF'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>/usr/share/fonts</dir>
+  <dir>/usr/share/fonts/google-noto</dir>
+  <cachedir>/var/cache/fontconfig</cachedir>
+</fontconfig>
+EOF
+
+# Build cache (non-fatal)
+fc-cache -rv || true
+
 
 # Import Brave signing key
 rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
