@@ -41,6 +41,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build.sh && \
     /ctx/install-apps.sh && \
+    /ctx/fix-opt.sh && \
     /ctx/cleanup.sh
     
 ### LINTING
