@@ -2,6 +2,12 @@
 
 set -ouex pipefail
 
+mkdir -p /usr/lib/tmpfiles.d
+cat > /usr/lib/tmpfiles.d/fontconfig.conf <<'EOF'
+d /var/cache/fontconfig 0755 root root -
+EOF
+
+
 # Import Brave signing key
 rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
