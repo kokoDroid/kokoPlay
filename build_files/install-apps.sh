@@ -35,6 +35,7 @@ declare -A RPM_PACKAGES=(
   ["brave-browser"]="brave-browser"
 
   ["vscode"]="code"
+  ["copr:zeno/scrcpy"]="scrcpy"
 )
 
 log "Starting Amy OS build process"
