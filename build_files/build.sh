@@ -35,40 +35,36 @@ rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
 rpm --import https://download.docker.com/linux/fedora/gpg
 
-# Add Brave repo (CORRECT URL)
-#cat > /etc/yum.repos.d/brave-browser.repo << 'EOF'
-#[brave-browser]
-#name=Brave Browser
-#baseurl=https://brave-browser-rpm-release.s3.brave.com/x86_64/
-#enabled=1
-#gpgcheck=1
-#gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-#EOF
 
-# Install Brave
-#dnf5 install -y brave-browser
+
 dnf5 install -y adw-gtk3-theme abattis-cantarell-fonts
-dnf5 reinstall -y pango
-dnf5 install -y pango-devel
+#dnf5 reinstall -y pango
+#dnf5 install -y pango-devel
 dnf5 install -y icu
 
-#mkdir -p /usr/lib64/locale
-
-#dnf5 install -y glibc-locale-source glibc-all-langpacks
 dnf5 install -y glibc-langpack-en
 
-# Generate locale archive for English UTF-8
-#localedef -i en_US -f UTF-8 /usr/lib64/locale/en_US.utf8
-#localedef -v -c -i en_US -f UTF-8 /usr/lib64/locale/locale-archive
 
-#dnf5 install -y gtk4
 
 
 #dnf5 install -y /rpms/*.rpm
-dnf5 install -y /rpms/*.rpm --exclude=megasync*
+echo "Installing local RPMs..."
 
-dnf5 install -y /rpms/megasync-*.rpm --setopt=tsflags=noscripts
+# 1️⃣ Install all RPMs except MegaSync
+echo "Installing all RPMs except MegaSync..."
+dnf5 install -y $(find /rpms -maxdepth 1 -type f -name '*.rpm' ! -name 'megasync-*.rpm')
 
+# 2️⃣ Install MegaSync separately with --noscripts
+MEGASYNC_RPM=$(find /rpms -maxdepth 1 -type f -name 'megasync-*.rpm')
+
+if [[ -f "$MEGASYNC_RPM" ]]; then
+    echo "Installing MegaSync RPM without running post-install scripts..."
+    dnf5 install -y "$MEGASYNC_RPM" --setopt=tsflags=noscripts
+else
+    echo "No MegaSync RPM found in /rpms, skipping..."
+fi
+
+echo "All RPMs installed successfully."
 
 # Packages can be installed from any enabled yum repo on the image.
 # RPMfusion repos are available by default in ublue main images
@@ -76,7 +72,7 @@ dnf5 install -y /rpms/megasync-*.rpm --setopt=tsflags=noscripts
 # https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/39/x86_64/repoview/index.html&protocol=https&redirect=1
 
 # this installs a package from fedora repos
-dnf5 install -y tmux 
+#dnf5 install -y tmux 
 #dnf5 clean all
 
 # Use a COPR Example:
