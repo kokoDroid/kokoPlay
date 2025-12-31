@@ -64,8 +64,10 @@ dnf5 install -y glibc-langpack-en
 #dnf5 install -y gtk4
 
 
-dnf5 install -y /rpms/*.rpm
+#dnf5 install -y /rpms/*.rpm
+dnf5 install -y /rpms/*.rpm --exclude=megasync*
 
+dnf5 install -y /rpms/megasync-*.rpm --setopt=tsflags=noscripts
 
 
 # Packages can be installed from any enabled yum repo on the image.
