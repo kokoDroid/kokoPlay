@@ -10,8 +10,17 @@ log() {
 log "Building initramfs"
 
 # Get kernel version and build initramfs
+
 KERNEL_VERSION="$(dnf5 repoquery --installed --queryformat='%{evr}.%{arch}' kernel)"
-/usr/bin/dracut \
+
+# Build directory (Bazzite staging root)
+BUILD_ROOT="/tmp/image-root"
+
+# Ensure module directory exists in staging tree
+mkdir -p "$BUILD_ROOT/usr/lib/modules/$KERNEL_VERSION"
+
+# Generate initramfs inside the staging tree
+chroot "$BUILD_ROOT" /usr/bin/dracut \
   --no-hostonly \
   --kver "$KERNEL_VERSION" \
   --reproducible \
@@ -20,6 +29,8 @@ KERNEL_VERSION="$(dnf5 repoquery --installed --queryformat='%{evr}.%{arch}' kern
   --add ostree \
   -f "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"
 
-chmod 0600 "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"
+# Secure the file
+chmod 0600 "$BUILD_ROOT/usr/lib/modules/$KERNEL_VERSION/initramfs.img"
+
 
 log "Build completed"
