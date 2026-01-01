@@ -16,6 +16,7 @@ There are many other apps included by default. It also adds just files to instal
 It will add support to map directories from Local NAS and mount them during boot or the same for Proton drive which is unsupported on Linux, so it is work in progress.
 Read me file will be updated during progress.
 
-#Acknowledgments
+# Acknowledgments
+
 This project is based on the Universal Blue image template and builds upon the excellent work of the Universal Blue community.
 
