@@ -38,7 +38,7 @@ declare -A RPM_PACKAGES=(
   ["copr:zeno/scrcpy"]="scrcpy"
 )
 
-log "Starting Amy OS build process"
+log "Starting kokoPlay OS build process"
 
 log "Installing RPM packages"
 mkdir -p /var/opt
@@ -60,5 +60,6 @@ for repo in "${!RPM_PACKAGES[@]}"; do
   fi
 done
 
-
+log "Adding kokoPlay OS just recipes"
+echo "import \"/usr/share/kokoplay/just/kokoplay.just\"" >>/usr/share/ublue-os/justfile
 log "Build process completed"
