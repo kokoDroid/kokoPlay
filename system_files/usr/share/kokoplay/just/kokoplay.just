@@ -1,5 +1,5 @@
 # Install only Flatpaks
-kokoplay-install-flatpaks:=
+kokoplay-install-flatpaks:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -8,7 +8,7 @@ kokoplay-install-flatpaks:=
     echo "Flatpaks installation complete."
 
 # Install only Homebrews
-kokoplay-install-brews:=
+kokoplay-install-brews:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -17,7 +17,8 @@ kokoplay-install-brews:=
     echo "Homebrews installation complete."
 
 # Install local NAS support directory mapping
-kokoplay-install-nas:=
-set -euo pipefail
+kokoplay-install-nas:
+    #!/usr/bin/env bash
+    set -euo pipefail
 
     echo "Installing NAS... not yet implemented"
