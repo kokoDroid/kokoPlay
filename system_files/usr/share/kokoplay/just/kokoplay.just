@@ -24,18 +24,21 @@ kokoplay-install-nas:
     set -euo pipefail
 
 
-# Store secrets securely
+    # Store secrets securely
     echo "Enter SMB username:"
-    secret-tool store --label="SMB Username" service smb key user
+    # secret-tool store --label="SMB Username" service smb key user
+    secret-tool store service smb key user
 
     echo "Enter SMB password:"
-    secret-tool store --label="SMB Password" service smb key pass
-
+    # secret-tool store --label="SMB Password" service smb key pass
+    secret-tool store service smb key pass
     echo "Enter SMB server IP:"
-    secret-tool store --label="SMB IP" service smb key ip
+    #secret-tool store --label="SMB IP" service smb key ip
+    secret-tool store service smb key ip
 
     echo "Enter SMB share directory:"
-    secret-tool store --label="SMB Directory" service smb key dir
+    #secret-tool store --label="SMB Directory" service smb key dir
+    secret-tool store service smb key dir
 
 
 
