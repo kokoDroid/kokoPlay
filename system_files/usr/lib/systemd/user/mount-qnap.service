@@ -1,11 +1,15 @@
 [Unit]
 Description=Mount QNAP SMB share
 After=graphical-session.target
+Wants=graphical-session.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/libexec/smbmount.sh
-StandardInput=tty
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
 
 [Install]
 WantedBy=default.target
