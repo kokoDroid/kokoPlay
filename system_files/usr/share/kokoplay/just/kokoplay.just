@@ -18,27 +18,25 @@ kokoplay-install-brews:
    
     echo "Homebrews installation complete."
 
-# Install local NAS support parameters <IP> <USERNAME> <PASSWORD> <DIR>
+# Install local NAS support parameters
 kokoplay-install-nas:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    if [[ $# -ne 4 ]]; then
-      echo "Usage: ujust kokoplay-install-nas <IP> <USERNAME> <PASSWORD> <DIR>"
-      exit 1
-    fi
-
-    IP="$1"
-    USER="$2"
-    PASS="$3"
-    DIR="$4"
-
 
 # Store secrets securely
-    printf '%s' "$USER" | secret-tool store --label="SMB Username" service smb key user
-    printf '%s' "$PASS" | secret-tool store --label="SMB Password" service smb key pass
-    printf '%s' "$IP"   | secret-tool store --label="SMB IP" service smb key ip
-    printf '%s' "$DIR"  | secret-tool store --label="SMB DIR" service smb key dir
+    echo "Enter SMB username:"
+    secret-tool store --label="SMB Username" service smb key user
+
+    echo "Enter SMB password:"
+    secret-tool store --label="SMB Password" service smb key pass
+
+    echo "Enter SMB server IP:"
+    secret-tool store --label="SMB IP" service smb key ip
+
+    echo "Enter SMB share directory:"
+    secret-tool store --label="SMB Directory" service smb key dir
+
 
 
 # Reload and enable user service

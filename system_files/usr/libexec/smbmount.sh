@@ -26,7 +26,7 @@ if [[ -z "$USERNAME" || -z "$PASSWORD" || "$USERNAME" == "None" || "$PASSWORD" =
     exit 1
 fi
 # Ensure mount point exists
-#mkdir -p "$MOUNTPOINT"
+mkdir -p "$MOUNTPOINT"
 
 # Mount with cifs
 NAS="//${IP}/${DIR}"
