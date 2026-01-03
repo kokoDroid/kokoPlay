@@ -47,3 +47,12 @@ kokoplay-install-nas:
     systemctl --user start mount-qnap.service
 
     echo "NAS should be mounted in home directory"
+
+# Make NAS mountable without root password during boot
+kokoplay-mount-cifs-sudo:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/mount.cifs" | sudo tee /etc/sudoers.d/$USER-mount-cifs
+    sudo chmod 440 /etc/sudoers.d/$USER-mount-cifs
+    sudo visudo -c

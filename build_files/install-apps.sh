@@ -21,6 +21,7 @@ declare -A RPM_PACKAGES=(
     nmap \
     util-linux \
     wireshark \
+    thefuck \
     yakuake \
     yt-dlp"
 
