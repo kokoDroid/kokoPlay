@@ -1,4 +1,5 @@
 # Install selected Flatpaks apps
+[group('kokoPlay')]
 kokoplay-install-flatpaks:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -9,6 +10,7 @@ kokoplay-install-flatpaks:
     echo "Flatpaks installation complete."
 
 # Install selected Homebrews
+[group('kokoPlay')]
 kokoplay-install-brews:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -19,6 +21,7 @@ kokoplay-install-brews:
     echo "Homebrews installation complete."
 
 # Install local NAS support parameters
+[group('kokoPlay')]
 kokoplay-install-nas:
     #!/usr/bin/env bash
     set -euo pipefail
