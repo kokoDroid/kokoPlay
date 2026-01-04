@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 set -euo pipefail
+set -x
 
 # Copy theme
 mkdir -p /usr/local/share/plasma/look-and-feel
