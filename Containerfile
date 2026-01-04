@@ -40,6 +40,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build.sh && \
+    /ctx/install-splash-logo.sh && \
     /ctx/install-apps.sh && \
     /ctx/fix-opt.sh && \
     /ctx/build-initramfs.sh && \
