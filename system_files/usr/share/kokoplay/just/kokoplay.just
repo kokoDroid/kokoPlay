@@ -52,6 +52,7 @@ kokoplay-install-nas:
     echo "NAS should be mounted in home directory"
 
 # Make NAS mountable without root password during boot
+[group('kokoPlay')]
 kokoplay-mount-cifs-sudo:
     #!/usr/bin/env bash
     set -euo pipefail
