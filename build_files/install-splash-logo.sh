@@ -15,7 +15,7 @@ rm -rf "$DST"
 cp -a "$SRC" "$DST"
 
 # --- Step 2: Add splash logo ---
-mkdir -p "$DST/contents/splash/images"
+mkdir -p "$DST/contents/splash/images" || true
 curl -L -o "$DST/contents/splash/images/$LOGO_FILE" "$LOGO_URL"
 
 # --- Step 3: Update Splash.qml to point to new logo ---
@@ -25,7 +25,7 @@ if [ -f "$SPLASH_QML" ]; then
 fi
 
 # --- Step 4: Ensure defaults folder exists ---
-mkdir -p "$DST/contents/defaults"
+mkdir -p "$DST/contents/defaults" || true
 
 # --- Step 5: Create or copy new profile ---
 PROFILE="$DST/contents/defaults/KokoPlay.profile"
