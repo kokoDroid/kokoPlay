@@ -23,6 +23,14 @@ mkdir -p "$DST"
 # ---------------------------
 cp -a "$SRC/"* "$DST/"
 
+META_JSON=/usr/share/plasma/look-and-feel/com.kokoplay.desktop/metadata.json
+
+sed -i \
+  -e 's|"Id"[[:space:]]*:[[:space:]]*"com.valve.vapor.desktop"|"Id": "com.kokoplay.desktop"|' \
+  -e 's|"Name"[[:space:]]*:[[:space:]]*"Vapor"|"Name": "KokoPlay"|' \
+  -e 's|"Description"[[:space:]]*:[[:space:]]*"The stock SteamOS theme"|"Description": "KokoPlay Plasma Look-and-Feel"|' \
+  "$META_JSON"
+
 # ---------------------------
 # 3️⃣ Ensure splash images directory exists
 # ---------------------------
