@@ -1,51 +1,70 @@
 #!/usr/bin/bash
+
 set -euo pipefail
 set -x
 
-# ---------------------------
-# Variables
-# ---------------------------
+# --- Variables ---
 NEW_ID=com.kokoplay.desktop
 SRC=/usr/share/plasma/look-and-feel/com.valve.vapor.desktop
 DST=/usr/share/plasma/look-and-feel/$NEW_ID
+LOGO_URL=https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz
+LOGO_FILE=bazzite_logo.svgz
 
-# Copy base LNF
+# --- Step 1: Copy base Look-and-Feel ---
 rm -rf "$DST"
 cp -a "$SRC" "$DST"
 
-# Replace busywidget/logo
-mkdir -p "$DST/contents/splash/images" || true
-curl -L -o "$DST/contents/splash/images/bazzite_logo.svgz" \
-  https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz
+# --- Step 2: Add splash logo ---
+mkdir -p "$DST/contents/splash/images"
+curl -L -o "$DST/contents/splash/images/$LOGO_FILE" "$LOGO_URL"
 
-# Update Splash.qml to point to new logo (optional if you want a separate file)
+# --- Step 3: Update Splash.qml to point to new logo ---
 SPLASH_QML="$DST/contents/splash/Splash.qml"
-sed -i 's|images/[^"]*\.svgz|images/bazzite_logo.svgz|g' "$SPLASH_QML"
+if [ -f "$SPLASH_QML" ]; then
+    sed -i 's|images/[^"]*\.svgz|images/bazzite_logo.svgz|g' "$SPLASH_QML"
+fi
 
-# Fix metadata
-sed -i \
-  -e 's|"Id"[[:space:]]*:[[:space:]]*"com.valve.vapor.desktop"|"Id": "com.kokoplay.desktop"|' \
-  -e 's|"Name"[[:space:]]*:[[:space:]]*"Vapor"|"Name": "KokoPlay"|' \
-  -e 's|"Description"[[:space:]]*:[[:space:]]*"The stock SteamOS theme"|"Description": "KokoPlay Plasma Look-and-Feel"|' \
-  "$DST/metadata.json"
+# --- Step 4: Ensure defaults folder exists ---
+mkdir -p "$DST/contents/defaults"
 
-# Update default profile for splash
-mkdir -p "$DST/contents/defaults" || true
+# --- Step 5: Create or copy new profile ---
+PROFILE="$DST/contents/defaults/KokoPlay.profile"
+if [ -f "$DST/contents/defaults/Vapor.profile" ]; then
+    cp "$DST/contents/defaults/Vapor.profile" "$PROFILE"
+else
+    touch "$PROFILE"
+fi
 
-PROFILE="$DST/contents/defaults/Vapor.profile"
+# --- Step 6: Patch SplashScreen section ---
 if grep -q "^\[SplashScreen\]" "$PROFILE"; then
     sed -i '/^\[SplashScreen\]/,/^\[/{s|Theme=.*|Theme=com.kokoplay.desktop|}' "$PROFILE"
 else
-    echo -e "\n[SplashScreen]\nTheme=com.kokoplay.desktop" >> "$PROFILE"
+    echo -e "[SplashScreen]\nTheme=com.kokoplay.desktop" >> "$PROFILE"
 fi
 
+# --- Step 7: Update metadata.desktop ---
+META="$DST/metadata.desktop"
+sed -i \
+    -e "s|^X-KDE-PluginInfo-Name=.*|X-KDE-PluginInfo-Name=$NEW_ID|" \
+    -e 's|^Name=.*|Name=KokoPlay|' \
+    -e 's|^Comment=.*|Comment=KokoPlay Plasma Look-and-Feel|' \
+    -e "s|^DefaultProfile=.*|DefaultProfile=KokoPlay.profile|" \
+    "$META"
 
-# ---------------------------
-# 7️⃣ Set system default Look-and-Feel
-# ---------------------------
-mkdir -p /etc/xdg
-sed -i '/^LookAndFeelPackage=/d' /etc/xdg/kdeglobals
-echo "LookAndFeelPackage=com.kokoplay.desktop" >> /etc/xdg/kdeglobals
+# --- Step 8: Update metadata.json ---
+JSON="$DST/metadata.json"
+if [ -f "$JSON" ]; then
+    sed -i \
+        -e 's|"Id"[[:space:]]*:[[:space:]]*"com.valve.vapor.desktop"|"Id": "com.kokoplay.desktop"|' \
+        -e 's|"Name"[[:space:]]*:[[:space:]]*"Vapor"|"Name": "KokoPlay"|' \
+        -e 's|"Description"[[:space:]]*:[[:space:]]*"The stock SteamOS theme"|"Description": "KokoPlay Plasma Look-and-Feel"|' \
+        "$JSON"
+fi
+
+# --- Step 9: Set LookAndFeelPackage for first login ---
+mkdir -p /etc/xdg || true
+sed -i '/^LookAndFeelPackage=/d' /etc/xdg/kdeglobals || true
+echo "LookAndFeelPackage=$NEW_ID" >> /etc/xdg/kdeglobals
 
 # ---------------------------
 # 8️⃣ Optional debug: verify files
