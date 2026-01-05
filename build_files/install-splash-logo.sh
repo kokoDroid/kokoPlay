@@ -9,72 +9,36 @@ NEW_ID=com.kokoplay.desktop
 SRC=/usr/share/plasma/look-and-feel/com.valve.vapor.desktop
 DST=/usr/share/plasma/look-and-feel/$NEW_ID
 
-LOGO_URL="https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz"
-LOGO_FILE="bazzite_logo.svgz"
-
-# ---------------------------
-# 1️⃣ Clean destination
-# ---------------------------
+# Copy base LNF
 rm -rf "$DST"
-mkdir -p "$DST"
+cp -a "$SRC" "$DST"
 
-# ---------------------------
-# 2️⃣ Copy source theme
-# ---------------------------
-cp -a "$SRC/"* "$DST/"
+# Replace busywidget/logo
+mkdir -p "$DST/contents/splash/images"
+curl -L -o "$DST/contents/splash/images/bazzite_logo.svgz" \
+  https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz
 
-META_JSON=/usr/share/plasma/look-and-feel/com.kokoplay.desktop/metadata.json
+# Update Splash.qml to point to new logo (optional if you want a separate file)
+SPLASH_QML="$DST/contents/splash/Splash.qml"
+sed -i 's|images/[^"]*\.svgz|images/bazzite_logo.svgz|g' "$SPLASH_QML"
 
+# Fix metadata
 sed -i \
   -e 's|"Id"[[:space:]]*:[[:space:]]*"com.valve.vapor.desktop"|"Id": "com.kokoplay.desktop"|' \
   -e 's|"Name"[[:space:]]*:[[:space:]]*"Vapor"|"Name": "KokoPlay"|' \
   -e 's|"Description"[[:space:]]*:[[:space:]]*"The stock SteamOS theme"|"Description": "KokoPlay Plasma Look-and-Feel"|' \
-  "$META_JSON"
+  "$DST/metadata.json"
 
-# ---------------------------
-# 3️⃣ Ensure splash images directory exists
-# ---------------------------
-mkdir -p "$DST/contents/splash/images"
+# Update default profile for splash
+mkdir -p "$DST/contents/defaults"
 
-# ---------------------------
-# 4️⃣ Download custom logo
-# ---------------------------
-curl -L -o "$DST/contents/splash/images/$LOGO_FILE" "$LOGO_URL"
-
-# ---------------------------
-# 5️⃣ Ensure Splash.qml exists
-#    If missing, create minimal one
-# ---------------------------
-SPLASH_QML="$DST/contents/splash/Splash.qml"
-
-if [ ! -f "$SPLASH_QML" ]; then
-cat > "$SPLASH_QML" <<'EOF'
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-
-Rectangle {
-    width: 640
-    height: 480
-    color: "black"
-
-    Image {
-        anchors.centerIn: parent
-        source: "images/bazzite_logo.svgz"
-    }
-}
-EOF
+PROFILE="$DST/contents/defaults/Vapor.profile"
+if grep -q "^\[SplashScreen\]" "$PROFILE"; then
+    sed -i '/^\[SplashScreen\]/,/^\[/{s|Theme=.*|Theme=com.kokoplay.desktop|}' "$PROFILE"
+else
+    echo -e "\n[SplashScreen]\nTheme=com.kokoplay.desktop" >> "$PROFILE"
 fi
 
-# ---------------------------
-# 6️⃣ Update metadata
-# ---------------------------
-META="$DST/metadata.desktop"
-
-sed -i \
-  -e 's|^X-KDE-PluginInfo-Name=.*|X-KDE-PluginInfo-Name=com.kokoplay.desktop|' \
-  -e 's|^Name=.*|Name=KokoPlay|' \
-  -e 's|^Comment=.*|Comment=KokoPlay Plasma Look-and-Feel|' \
-  "$META"
 
 # ---------------------------
 # 7️⃣ Set system default Look-and-Feel
