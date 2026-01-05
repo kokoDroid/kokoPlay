@@ -14,7 +14,7 @@ rm -rf "$DST"
 cp -a "$SRC" "$DST"
 
 # Replace busywidget/logo
-mkdir -p "$DST/contents/splash/images"
+mkdir -p "$DST/contents/splash/images" || true
 curl -L -o "$DST/contents/splash/images/bazzite_logo.svgz" \
   https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz
 
