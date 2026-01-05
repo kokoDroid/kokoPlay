@@ -1,22 +1,22 @@
 #!/usr/bin/bash
+
 set -euo pipefail
 set -x
 
-# Copy theme
-mkdir -p /usr/local/share/plasma/look-and-feel
-cp -r /usr/share/plasma/look-and-feel/com.valve.vapor.desktop \
-      /usr/local/share/plasma/look-and-feel/
+LNF_ID=com.valve.vapor.desktop
+BASE=/var/usrlocal/share/plasma/look-and-feel/$LNF_ID
 
-mkdir -p /usr/local/share/plasma/look-and-feel/com.valve.vapor.desktop/contents/splash/images
+# Create directories in the REAL writable location
+mkdir -p "$BASE/contents/splash/images"
 
+# Copy base look-and-feel
+cp -r /usr/share/plasma/look-and-feel/$LNF_ID/* "$BASE/"
 
+# Download your logo
 curl -L -o \
-/usr/local/share/plasma/look-and-feel/com.valve.vapor.desktop/contents/splash/images/kokoplay-logo.svgz \
+"$BASE/contents/splash/images/kokoplay-logo.svgz" \
 https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz
 
-SPLASH=/usr/local/share/plasma/look-and-feel/com.valve.vapor.desktop/contents/splash
-
+# Patch Splash.qml
 sed -i '/source:.*logo/ s|source:.*|source: "images/kokoplay-logo.svgz"|' \
-"$SPLASH/Splash.qml"
-
-
+"$BASE/contents/splash/Splash.qml"
