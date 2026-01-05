@@ -7,7 +7,7 @@ set -x
 # ---------------------------
 NEW_ID=com.kokoplay.desktop
 SRC=/usr/share/plasma/look-and-feel/com.valve.vapor.desktop
-DST=/usr/local/share/plasma/look-and-feel/$NEW_ID
+DST=/usr/share/plasma/look-and-feel/$NEW_ID
 
 LOGO_URL="https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz"
 LOGO_FILE="bazzite_logo.svgz"
