@@ -30,7 +30,7 @@ sed -i \
   "$DST/metadata.json"
 
 # Update default profile for splash
-mkdir -p "$DST/contents/defaults"
+mkdir -p "$DST/contents/defaults" || true
 
 PROFILE="$DST/contents/defaults/Vapor.profile"
 if grep -q "^\[SplashScreen\]" "$PROFILE"; then
