@@ -11,6 +11,13 @@ DST=/var/usrlocal/share/plasma/look-and-feel/$NEW_ID
 rm -rf "$DST"
 mkdir -p "$DST"
 cp -a "$SRC/"* "$DST/"
+# Ensure splash images directory exists
+mkdir -p "$DST/contents/splash/images"
+
+# Replace splash logo
+curl -L -o \
+"$DST/contents/splash/images/bazzite_logo.svgz" \
+https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/repo_files/kokoplay-logo.svgz
 
 curl -L -o \
 "$DST/contents/splash/images/bazzite_logo.svgz" \
