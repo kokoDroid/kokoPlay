@@ -15,6 +15,7 @@ It integrates bjnp-cups for access to cannon printers over net.
 This package is not suported by Fedora and does not exist in Fedora repo any more.
 There are some other apps included by default such as:
     -android-tools 
+    -vscode
     -aria2 
     -bchunk 
     -bleachbit 
