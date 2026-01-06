@@ -23,6 +23,7 @@ declare -A RPM_PACKAGES=(
     wireshark \
     thefuck \
     yakuake \
+    kleopatra \
     yt-dlp"
 
 

@@ -3,7 +3,6 @@ com.ranfdev.DistroShelf
 com.vysp3r.ProtonPlus
 io.github.flattool.Warehouse
 org.fedoraproject.MediaWriter
-org.kde.kleopatra
 org.kde.skanlite
 org.keepassxc.KeePassXC
 org.mozilla.Thunderbird
