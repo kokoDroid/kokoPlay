@@ -11,4 +11,4 @@ immutability=1
 plugin=org.kde.plasma.kickoff
 
 [Containments][2][Applets][1][Configuration][General]
-icon=kokoplay-menu.png
+icon=kokoplay-menu.svg
