@@ -1,3 +1,3 @@
 applet.currentConfigGroup = ["General"]
-applet.writeConfig("icon", "distributor-logo-steamdeck")
+applet.writeConfig("icon", "kokoplay-logo.svg")
 applet.reloadConfig()
