@@ -97,7 +97,7 @@
         "FormFactors": [
             "desktop"
         ],
-        "Icon": "kokoplay-logo",
+        "Icon": "kokoplay-menu",
         "Id": "org.kde.plasma.kickerdash",
         "License": "GPL-2.0+",
         "Name": "Application Dashboard",
