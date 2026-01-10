@@ -2,7 +2,6 @@
 #sleep 10
 
 
-MOUNTPOINT="$HOME/NAS"
 
 # Retrieve credentials via Python keyring
 
@@ -26,6 +25,7 @@ if [[ -z "$USERNAME" || -z "$PASSWORD" || "$USERNAME" == "None" || "$PASSWORD" =
     exit 1
 fi
 # Ensure mount point exists
+MOUNTPOINT="$HOME/NAS/$DIR"
 mkdir -p "$MOUNTPOINT"
 
 # Mount with cifs

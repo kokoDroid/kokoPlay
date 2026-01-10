@@ -61,16 +61,13 @@ kokoplay-mount-cifs-sudo:
     sudo chmod 440 /etc/sudoers.d/$USER-mount-cifs
     sudo visudo -c
 
-# Make NAS mountable without root password during boot
-
 alias kpmd := kokoplay-mount-dir
 
+# Mount additional directroy to installed local NAS
 [group('kokoPlay')]
 kokoplay-mount-dir:
     #!/usr/bin/env bash
     set -euo pipefail   
-
-    MOUNTPOINT="$HOME/NAS"
 
     # Retrieve credentials via Python keyring
 
@@ -84,7 +81,9 @@ kokoplay-mount-dir:
     fi
 
     read -p "Enter directory name to mount: " DIR
+
     # Ensure mount point exists
+    MOUNTPOINT="$HOME/NAS/$DIR"
     mkdir -p "$MOUNTPOINT"
 
     # Mount with cifs
