@@ -60,3 +60,35 @@ kokoplay-mount-cifs-sudo:
     echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/mount.cifs" | sudo tee /etc/sudoers.d/$USER-mount-cifs
     sudo chmod 440 /etc/sudoers.d/$USER-mount-cifs
     sudo visudo -c
+
+# Make NAS mountable without root password during boot
+
+alias kpmd := kokoplay-mount-dir
+
+[group('kokoPlay')]
+kokoplay-mount-dir:
+    #!/usr/bin/env bash
+    set -euo pipefail   
+
+    MOUNTPOINT="$HOME/NAS"
+
+    # Retrieve credentials via Python keyring
+
+    USERNAME=$(secret-tool lookup service smb key user)
+    PASSWORD=$(secret-tool lookup service smb key pass)
+    IP=$(secret-tool lookup service smb key ip)
+
+    if [[ -z "$USERNAME" || -z "$PASSWORD" || "$USERNAME" == "None" || "$PASSWORD" == "None" ]]; then
+        echo "ERROR: Keyring credentials not available"
+        exit 1
+    fi
+
+    read -p "Enter directory name to mount: " DIR
+    # Ensure mount point exists
+    mkdir -p "$MOUNTPOINT"
+
+    # Mount with cifs
+    NAS="//${IP}/${DIR}"
+
+    sudo -n /usr/bin/mount.cifs "$NAS" "$MOUNTPOINT" \
+      -o user="$USERNAME",pass="$PASSWORD",uid=$(id -u),gid=$(id -g),iocharset=utf8
