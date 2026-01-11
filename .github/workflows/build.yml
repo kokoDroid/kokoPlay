@@ -12,6 +12,7 @@ on:
     paths-ignore:
       - '**/README.md'
       - "repo_files/**"
+      - '.github/workflows/cleanup-packages.yml'
   workflow_dispatch:
 
 env:
