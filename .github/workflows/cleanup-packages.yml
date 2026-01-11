@@ -13,6 +13,6 @@ jobs:
         with:
           package-name: 'kokoplay'
           package-type: 'container'
-          exclude-tags: .*latest.*
+          delete-only-untagged-versions: 'true'
           min-versions-to-keep: 20
           token: ${{ secrets.GITHUB_TOKEN }}
