@@ -1,3 +1,3 @@
 applet.currentConfigGroup = ["General"]
-applet.writeConfig("icon", "kokoplay-menu.svg")
+applet.writeConfig("icon", "kokoplay-menu")
 applet.reloadConfig()
