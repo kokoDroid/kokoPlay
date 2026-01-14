@@ -22,6 +22,8 @@ if (panel) {
     var transparency = panel.addWidget("org.kde.panel.transparency.toggle");
     transparency.writeConfig("enabled", true);  
     transparency.writeConfig("opacity", 0.85);
+    transparency.writeConfig("hideInEditModeEnabled", true);
+
 
 
 }
