@@ -9,7 +9,7 @@
     <entry
       name="hideInEditModeEnabled"
       type="Bool">
-      <default>false</default>
+      <default>true</default>
     </entry>
     
     <entry
