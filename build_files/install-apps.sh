@@ -24,6 +24,8 @@ declare -A RPM_PACKAGES=(
     thefuck \
     yakuake \
     kleopatra \
+    rclone \
+    alien \
     yt-dlp"
 
 
