@@ -31,6 +31,9 @@ There are some other apps included by default such as:
     -yakuake 
     -yt-dlp
     -kleopatra
+    -keepassxc
+    -alien
+    -rclone
 
 It also adds just files to install more currated flatpaks and brews.
 It adds support to map directories from Local NAS and mount them during boot. 

@@ -26,6 +26,7 @@ declare -A RPM_PACKAGES=(
     kleopatra \
     rclone \
     alien \
+    keepassxc \
     yt-dlp"
 
 
