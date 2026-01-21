@@ -83,6 +83,8 @@ echo "All RPMs installed successfully."
 # dnf5 -y copr disable ublue-os/staging
 
 #### Example for enabling a System Unit File
-systemctl --user mask app-megasync@autostart.service
+mkdir -p /etc/systemd/user
+ln -s /dev/null /etc/systemd/user/app-megasync@autostart.service
+
 
 systemctl enable podman.socket
