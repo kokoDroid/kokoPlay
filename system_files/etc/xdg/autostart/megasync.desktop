@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=MEGAsync
+Exec=env QT_QPA_PLATFORM=xcb /usr/bin/megasync
+Icon=mega
+Terminal=false
+X-GNOME-Autostart-enabled=true
