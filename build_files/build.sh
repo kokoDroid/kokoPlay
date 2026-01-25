@@ -86,5 +86,9 @@ echo "All RPMs installed successfully."
 mkdir -p /etc/systemd/user
 ln -s /dev/null /etc/systemd/user/app-megasync@autostart.service
 
+#keys
+sed -i 's|^gpgkey=file:///etc/pki/rpm-gpg/|gpgkey=https://tetsudou.fyralabs.com/keys/|' \
+  /etc/yum.repos.d/terra*.repo
+
 
 systemctl enable podman.socket
