@@ -87,8 +87,8 @@ mkdir -p /etc/systemd/user
 ln -s /dev/null /etc/systemd/user/app-megasync@autostart.service
 
 #keys
-sed -i 's|^gpgkey=file:///etc/pki/rpm-gpg/|gpgkey=https://tetsudou.fyralabs.com/keys/|' \
-  /etc/yum.repos.d/terra*.repo
+sed -i 's|^gpgkey=file:///etc/pki/rpm-gpg/|gpgkey=https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/disk_config/rpm-gpg/|' /etc/yum.repos.d/terra*.repo
+
 
 
 systemctl enable podman.socket
