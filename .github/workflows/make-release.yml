@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "v1.0.0"
+        description: "version .e.g. v1.0.0"
         required: true
       title:
-        description: "Release KokoPlay OS"
+        description: "Release Title"
         required: true
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - name: Download ISO artifact
         uses: actions/download-artifact@v4
         with:
-          name: kokoplay-iso
+          name: artifact
           path: ./release
 
       - name: Generate SHA256 checksums
