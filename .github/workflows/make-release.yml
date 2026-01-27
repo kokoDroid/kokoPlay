@@ -1,0 +1,35 @@
+release:
+  needs: build-iso
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v3
+
+    - name: Download ISO artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: kokoplay-iso
+        path: ./release
+
+    - name: Generate SHA256 checksums
+      run: |
+        cd release
+        sha256sum *.iso > SHA256SUMS
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v1.0.0
+        name: KoKoPlay ISO v1.0.0
+        body: |
+          Automated KoKoPlay ISO release.
+
+          Verify download integrity:
+          ```bash
+          sha256sum -c SHA256SUMS
+          ```
+        files: |
+          release/*.iso
+          release/SHA256SUMS
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

@@ -14,6 +14,7 @@ on:
       - "repo_files/**"
       - '.github/workflows/cleanup-packages.yml'
       - '.github/workflows/build-disk.yml'
+      - '.github/workflows/make-release.yml'
   workflow_dispatch:
 
 env:
