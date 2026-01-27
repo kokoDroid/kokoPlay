@@ -10,14 +10,13 @@ if (panel) {
         var w = widgets[i];
 
         if (w.type === "org.kde.plasma.kickoff" ||
-            w.type === "org.kde.plasma.kicker") {
+            w.type === "org.kde.plasma.kicker" ||
+            w.type === "org.kde.plasma.kickerdash") {
 
             w.writeConfig("icon", "kokoplay-menu");
         }
     }
 
-    var launcher = panel.addWidget("org.kde.plasma.kickerdash");
-    launcher.writeConfig("icon", "kokoplay-menu");
 
     var transparency = panel.addWidget("org.kde.panel.transparency.toggle");
     transparency.writeConfig("enabled", true);  
