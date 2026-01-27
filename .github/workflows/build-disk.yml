@@ -86,20 +86,8 @@ jobs:
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
-          additional-args: --use-librepo=True --rootfs=btrfsjobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Build ISO
-        uses: osbuild/bootc-image-builder-action@main
-        with:
-          builder-image: ${{ env.BIB_IMAGE }}
-          config-file: ./disk_config/iso-kde.toml
-          image: ghcr.io/kokodroid/kokoplay:latest
-          chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
-          types: anaconda-iso
+          additional-args: --use-librepo=True --rootfs=btrfs
+  
 
       # ✅ NEW: Upload ISO artifact
       - name: Upload ISO
