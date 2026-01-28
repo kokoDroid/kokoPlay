@@ -88,13 +88,17 @@ jobs:
           types: ${{ matrix.disk-type }}
           additional-args: --use-librepo=True --rootfs=btrfs
   
+      - name: Debug output directory
+        run: |
+          echo "=== output tree ==="
+          find output -type f
 
       # ✅ NEW: Upload ISO artifact
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
           name: kokoplay-iso
-          path: output/anaconda-iso/*.iso
+          path: output/**
 
 
 
