@@ -140,8 +140,9 @@ jobs:
       - name: Generate SHA256SUMS
         run: |
           cd release
-          sha256sum *.iso > SHA256SUMS
+          sha256sum output/bootiso/*.iso > SHA256SUMS
           cat SHA256SUMS
+
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -156,7 +157,8 @@ jobs:
             sha256sum -c SHA256SUMS
             ```
           files: |
-            release/*.iso
+            release/output/bootiso/*.iso
             release/SHA256SUMS
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
