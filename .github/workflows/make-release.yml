@@ -21,7 +21,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: kokoplay-iso
-          path: ./release
+          path: release
 
       - name: Generate SHA256 checksums
         run: |
