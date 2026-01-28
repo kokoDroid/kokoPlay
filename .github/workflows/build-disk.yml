@@ -136,12 +136,25 @@ jobs:
         with:
           name: kokoplay-iso
           path: release
+      
+      - name: Debug artifact contents
+        run: |
+          echo "=== release tree ==="
+          find release -maxdepth 4 -type f
 
       - name: Generate SHA256SUMS
         run: |
-          cd release
-          sha256sum output/bootiso/*.iso > SHA256SUMS
-          cat SHA256SUMS
+         cd release
+         ISO=$(find . -name '*.iso' | head -n 1)
+
+         if [ -z "$ISO" ]; then
+           echo "❌ No ISO found in artifact"
+           exit 1
+         fi
+
+         echo "Found ISO: $ISO"
+         sha256sum "$ISO" > SHA256SUMS
+         cat SHA256SUMS
 
 
       - name: Create GitHub Release
