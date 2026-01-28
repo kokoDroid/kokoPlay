@@ -127,7 +127,7 @@ jobs:
           rclone copy $SOURCE_DIR S3:${{ secrets.S3_BUCKET_NAME }}
   
   release:
-  needs: build-iso
+  needs: build
   runs-on: ubuntu-latest
   steps:
     - uses: actions/download-artifact@v4
