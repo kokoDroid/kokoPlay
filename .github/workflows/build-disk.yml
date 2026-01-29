@@ -106,15 +106,15 @@ jobs:
 
 
 
-      - name: Upload disk images and Checksum to Job Artifacts
-        if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          path: ${{ steps.build.outputs.output-directory }}
-          if-no-files-found: error
-          retention-days: 0
-          compression-level: 0
-          overwrite: true
+      #- name: Upload disk images and Checksum to Job Artifacts
+      #  if: inputs.upload-to-s3 != true && github.event_name != 'pull_request'
+      #  uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      #  with:
+      #    path: ${{ steps.build.outputs.output-directory }}
+      #    if-no-files-found: error
+      #    retention-days: 0
+      #    compression-level: 0
+      #    overwrite: true
       
       - name: Upload to S3
         if: inputs.upload-to-s3 == true && github.event_name != 'pull_request'
@@ -137,6 +137,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ✅ REQUIRED
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # REQUIRED for tag creation
+
       - name: Download ISO artifact
         uses: actions/download-artifact@v4
         with:
