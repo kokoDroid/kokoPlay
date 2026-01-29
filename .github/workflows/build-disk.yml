@@ -165,8 +165,8 @@ jobs:
         # ✅ CREATE TAG
       - name: Create git tag
         run: |
-        git tag ${{ inputs.tag }}
-        git push origin ${{ inputs.tag }}
+          git tag ${{ inputs.tag }}
+          git push origin ${{ inputs.tag }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
