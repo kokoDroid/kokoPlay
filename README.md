@@ -50,11 +50,19 @@ Just recipes:
 
 ## Using the image
 
-Install Bazzite image than rebase via
+There is installation disk "kokoplay-iso-amd64" release
+
+<https://github.com/kokoDroid/kokoPlay/releases/tag/v1.0>
+
+Please use Fedora Image Writer to make bootable ISO disk and install KokoPlay OS.
+
+OR install Bazzite image than rebase via
 
 ```bash
 sudo bootc switch ghcr.io/kokodroid/kokoplay:latest
 ```
+If you rebase from bazzite please apply kokoplay theme manually with layout to get
+transparent panel.
 
 ## Verification
 
