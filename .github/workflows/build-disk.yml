@@ -4,6 +4,12 @@ name: Build disk images
 on:
   workflow_dispatch:
     inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0)"
+        required: true
+      title:
+        description: "Release title"
+        required: true
       upload-to-s3:
         description: "Upload to S3"
         required: false
@@ -156,6 +162,11 @@ jobs:
          sha256sum "$ISO" > SHA256SUMS
          cat SHA256SUMS
 
+        # ✅ CREATE TAG
+      - name: Create git tag
+        run: |
+        git tag ${{ inputs.tag }}
+        git push origin ${{ inputs.tag }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
