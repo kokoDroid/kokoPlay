@@ -44,15 +44,16 @@ Just recipes:
  - [kokoPlay]
  - kokoplay-install-brews                            # Install selected Homebrews
  - kokoplay-install-flatpaks                         # Install selected Flatpaks apps
- - kokoplay-install-nas                              # Install local NAS support parameters
+ - kokoplay-install-nas                              # Install local NAS support and mount persistent directory
  - kokoplay-mount-cifs-sudo                          # Make NAS mountable without root password during boot
+ - kokoplay-mount-dir                                # Mount additional directory to installed local NAS
 
 
 ## Using the image
 
-There is installation disk "kokoplay-iso-amd64" release
+There is installation disk "install.iso" for download
 
-<https://github.com/kokoDroid/kokoPlay/releases/tag/v1.0>
+<https://sourceforge.net/projects/kokoplayos/files/Releases/1.0.0/>
 
 Please use Fedora Image Writer to make bootable ISO disk and install KokoPlay OS.
 
