@@ -81,7 +81,7 @@ jobs:
           remove-codeql: true
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Build disk images
         id: build
@@ -97,7 +97,7 @@ jobs:
 
       # ✅ NEW: Upload ISO artifact
       - name: Upload ISO
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kokoplay-iso
           path: |
@@ -139,12 +139,12 @@ jobs:
     steps:
       # ✅ REQUIRED
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0   # REQUIRED for tag creation
 
       - name: Download ISO artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: kokoplay-iso
           path: release
@@ -181,7 +181,7 @@ jobs:
           find release -type f -ls
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag }}
           name: ${{ inputs.title }}
