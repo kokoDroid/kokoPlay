@@ -41,6 +41,8 @@ declare -A RPM_PACKAGES=(
 
   ["vscode"]="code"
   ["copr:zeno/scrcpy"]="scrcpy"
+  ["copr:faugus/faugus-launcher"]="faugus-launcher"
+
 )
 
 log "Starting kokoPlay OS build process"
