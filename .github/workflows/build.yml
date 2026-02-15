@@ -194,7 +194,7 @@ jobs:
       #    TAGS: ${{ steps.push.outputs.digest }}
       #    COSIGN_EXPERIMENTAL: false
       #    COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-      
+
       # ------------------------------
       # Multi-arch push + sign workflow
       # ------------------------------
@@ -209,11 +209,11 @@ jobs:
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "TAGS=$TAGS" >> $GITHUB_ENV
           echo "REMOTE_IMAGE=$REMOTE_IMAGE" >> $GITHUB_ENV
-
-      - name: Install Build Dependencies
+          
+      - name: Install skopeo on Ubuntu runner
         run: |
-          sudo dnf -y update
-          sudo dnf install -y skopeo jq
+          sudo apt-get update
+          sudo apt-get install -y skopeo jq
 
       - name: Push multi-arch image to GHCR
         run: |
