@@ -99,7 +99,7 @@ jobs:
           TAG="${{ inputs.platform }}-latest"
           podman tag ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG \
                      ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-                     
+
       - name: Debug pulled image
         run: |
           echo "Listing all images locally"
@@ -108,6 +108,18 @@ jobs:
           echo "Inspecting the specific image"
           podman image inspect ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} \
             | jq '.[] | {RepoTags, Architecture, Os, Digest}'
+
+
+      - name: Make image visible to sudo/root
+        run: |
+          TAG="${{ inputs.platform }}-latest"
+          sudo podman tag ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG \
+                        ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG        
+
+      - name: Debug podman images as root
+        run: |
+          sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}} {{.Architecture}} {{.OS}}"
+
 
       - name: Build disk images
         id: build
