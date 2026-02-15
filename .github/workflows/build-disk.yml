@@ -83,11 +83,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       
+      #- name: Pull kokoplay image for this platform
+      #  run: |
+      #    echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
+      #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+
       - name: Pull kokoplay image for this platform
         run: |
-          echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
-          podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
-
+          TAG="${{ inputs.platform }}-latest"
+          echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG"
+          podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG
+  
       - name: Debug pulled image
         run: |
           echo "Listing all images locally"
