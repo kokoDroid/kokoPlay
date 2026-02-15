@@ -93,7 +93,13 @@ jobs:
           TAG="${{ inputs.platform }}-latest"
           echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG"
           podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG
-  
+
+      - name: Ensure local tag exists for bootc-image-builder
+        run: |
+          TAG="${{ inputs.platform }}-latest"
+          podman tag ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG \
+                     ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+                     
       - name: Debug pulled image
         run: |
           echo "Listing all images locally"
