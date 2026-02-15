@@ -231,16 +231,21 @@ jobs:
             buildah manifest add $IMAGE_NAME:arm64-$tag $IMAGE_NAME:$tag --arch arm64
           done
 
-
       - name: Push images to GHCR
         run: |
           for tag in $TAGS; do
-            # push per-arch images (THIS IS WHAT ISO NEEDS)
-            buildah push $IMAGE_NAME:amd64-$tag docker://$REMOTE_IMAGE:amd64-$tag
-            buildah push $IMAGE_NAME:arm64-$tag docker://$REMOTE_IMAGE:arm64-$tag
+            echo "Pushing manifest $tag"
+            buildah push --all kokoplay:$tag docker://$REMOTE_IMAGE:$tag
 
-            # also push multi-arch manifest (optional but fine)
-            buildah push --all $IMAGE_NAME:$tag docker://$REMOTE_IMAGE:$tag
+            echo "Pushing amd64 image"
+            buildah push \
+              kokoplay:${tag}-linuxamd64 \
+              docker://$REMOTE_IMAGE:amd64-$tag
+
+            echo "Pushing arm64 image"
+            buildah push \
+              kokoplay:${tag}-linuxarm64 \
+              docker://$REMOTE_IMAGE:arm64-$tag
           done
 
     
