@@ -171,19 +171,25 @@ jobs:
       #    tags: ${{ steps.metadata.outputs.tags }}
       #    username: ${{ env.REGISTRY_USER }}
       #    password: ${{ env.REGISTRY_PASSWORD }}
+
       - name: Push multi-arch image to GHCR (with manifest)
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         run: |
-          IMAGE=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+          LOCAL_IMAGE=${{ env.IMAGE_NAME }}
           TAG=${{ steps.metadata.outputs.version }}
+          REMOTE_IMAGE=ghcr.io/${{ github.repository }}/$LOCAL_IMAGE
 
-          echo "Pushing multi-arch image: $IMAGE:$TAG"
+          echo "Pushing multi-arch image:"
+          echo "  local:  $LOCAL_IMAGE:$TAG"
+          echo "  remote: $REMOTE_IMAGE:$TAG"
 
-          # Push all architectures and publish manifest list
-          buildah push --all $IMAGE:$TAG docker://$IMAGE:$TAG
+          buildah push --all \
+            $LOCAL_IMAGE:$TAG \
+            docker://$REMOTE_IMAGE:$TAG
 
           echo "Verifying manifest:"
-          buildah manifest inspect $IMAGE:$TAG
+          buildah manifest inspect docker://$REMOTE_IMAGE:$TAG
+
 
       # This section is optional and only needs to be enabled if you plan on distributing
       # your project for others to consume. You will need to create a public and private key
