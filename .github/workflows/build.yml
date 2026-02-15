@@ -249,20 +249,23 @@ jobs:
             buildah tag $IMAGE_NAME:latest-linuxamd64 $IMAGE_NAME:${tag}-linuxamd64
             buildah tag $IMAGE_NAME:latest-linuxarm64 $IMAGE_NAME:${tag}-linuxarm64
 
-            # 2. Create manifest
-            buildah manifest create $IMAGE_NAME:$tag
+            # 2. Use a temporary manifest name to avoid collision with existing image
+            TMP_MANIFEST="${IMAGE_NAME}:manifest-$tag"
 
-            # 3. Add arch images to manifest
-            buildah manifest add $IMAGE_NAME:$tag $IMAGE_NAME:${tag}-linuxamd64
-            buildah manifest add $IMAGE_NAME:$tag $IMAGE_NAME:${tag}-linuxarm64
+            # 3. Create manifest
+            buildah manifest create $TMP_MANIFEST
 
-            # 4. Push manifest
+            # 4. Add arch images to manifest
+            buildah manifest add $TMP_MANIFEST $IMAGE_NAME:${tag}-linuxamd64
+            buildah manifest add $TMP_MANIFEST $IMAGE_NAME:${tag}-linuxarm64
+
+            # 5. Push manifest
             echo "Pushing manifest $tag"
             buildah manifest push --all \
-              $IMAGE_NAME:$tag \
+              $TMP_MANIFEST \
               docker://$REMOTE_IMAGE:$tag
 
-            # 5. Push arch-specific tags (bootc NEEDS these)
+            # 6. Push arch-specific tags (bootc NEEDS these)
             echo "Pushing amd64 image"
             buildah push \
               $IMAGE_NAME:${tag}-linuxamd64 \
