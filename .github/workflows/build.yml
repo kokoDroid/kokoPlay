@@ -124,6 +124,9 @@ jobs:
           oci: false
           platforms: linux/amd64,linux/arm64
 
+      - name: List local images
+        run: podman images
+   
       # Rechunk is a script that we use on Universal Blue to make sure there isnt a single huge layer when your image gets published.
       # This does not make your image faster to download, just provides better resumability and fixes a few errors.
       # Documentation for Rechunk is provided on their github repository at https://github.com/hhd-dev/rechunk
@@ -216,35 +219,58 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y skopeo jq
 
-      - name: Create arch-specific tags from manifest
+
+      - name: Extract per-arch images locally
         run: |
-          TAGS="${{ steps.metadata.outputs.tags }}"
+          set -euo pipefail
+          for tag in ${{ steps.metadata.outputs.tags }}; do
+            echo "Extracting amd64 image for $tag"
+            # Ensure multi-arch image exists
+            buildah manifest inspect ${{ env.IMAGE_NAME }}:$tag || exit 1
+            # Create per-arch manifests
+            buildah manifest create ${{ env.IMAGE_NAME }}:amd64-$tag
+            buildah manifest add ${{ env.IMAGE_NAME }}:amd64-$tag ${{ env.IMAGE_NAME }}:$tag --arch amd64
 
-          for tag in $TAGS; do
-            echo "Extracting amd64 image"
-            buildah manifest inspect $IMAGE_NAME:$tag
-            buildah manifest create $IMAGE_NAME:amd64-$tag
-            buildah manifest add $IMAGE_NAME:amd64-$tag $IMAGE_NAME:$tag --arch amd64
-
-            echo "Extracting arm64 image"
-            buildah manifest create $IMAGE_NAME:arm64-$tag
-            buildah manifest add $IMAGE_NAME:arm64-$tag $IMAGE_NAME:$tag --arch arm64
+            echo "Extracting arm64 image for $tag"
+            buildah manifest create ${{ env.IMAGE_NAME }}:arm64-$tag
+            buildah manifest add ${{ env.IMAGE_NAME }}:arm64-$tag ${{ env.IMAGE_NAME }}:$tag --arch arm64
           done
+   
+
 
       - name: Push images to GHCR
         run: |
-          for tag in $TAGS; do
-            echo "Pushing manifest $tag"
-            buildah push --all kokoplay:$tag docker://$REMOTE_IMAGE:$tag
+          set -euo pipefail
 
+          for tag in $TAGS; do
+            echo "=== Processing tag $tag ==="
+
+            # 1. Create per-tag arch image aliases
+            buildah tag $IMAGE_NAME:latest-linuxamd64 $IMAGE_NAME:${tag}-linuxamd64
+            buildah tag $IMAGE_NAME:latest-linuxarm64 $IMAGE_NAME:${tag}-linuxarm64
+
+            # 2. Create manifest
+            buildah manifest create $IMAGE_NAME:$tag
+
+            # 3. Add arch images to manifest
+            buildah manifest add $IMAGE_NAME:$tag $IMAGE_NAME:${tag}-linuxamd64
+            buildah manifest add $IMAGE_NAME:$tag $IMAGE_NAME:${tag}-linuxarm64
+
+            # 4. Push manifest
+            echo "Pushing manifest $tag"
+            buildah manifest push --all \
+              $IMAGE_NAME:$tag \
+              docker://$REMOTE_IMAGE:$tag
+
+            # 5. Push arch-specific tags (bootc NEEDS these)
             echo "Pushing amd64 image"
             buildah push \
-              kokoplay:${tag}-linuxamd64 \
+              $IMAGE_NAME:${tag}-linuxamd64 \
               docker://$REMOTE_IMAGE:amd64-$tag
 
             echo "Pushing arm64 image"
             buildah push \
-              kokoplay:${tag}-linuxarm64 \
+              $IMAGE_NAME:${tag}-linuxarm64 \
               docker://$REMOTE_IMAGE:arm64-$tag
           done
 
