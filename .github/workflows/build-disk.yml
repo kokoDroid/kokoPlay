@@ -88,6 +88,14 @@ jobs:
           echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
           podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
+      - name: Debug pulled image
+        run: |
+          echo "Listing all images locally"
+          podman images
+
+          echo "Inspecting the specific image"
+          podman image inspect ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} \
+            | jq '.[] | {RepoTags, Architecture, Os, Digest}'
 
       - name: Build disk images
         id: build
@@ -95,7 +103,8 @@ jobs:
         with:
           builder-image: ${{ env.BIB_IMAGE }}
           config-file: ${{ matrix.disk-type == 'anaconda-iso' && './disk_config/iso-kde.toml' || './disk_config/disk.toml' }}
-          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+          #image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
           additional-args: --use-librepo=True --rootfs=btrfs
