@@ -172,49 +172,64 @@ jobs:
       #    username: ${{ env.REGISTRY_USER }}
       #    password: ${{ env.REGISTRY_PASSWORD }}
 
-      - name: Push multi-arch image to GHCR (with manifest)
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        run: |
-          LOCAL_IMAGE=${{ env.IMAGE_NAME }}
-          TAG=${{ steps.metadata.outputs.version }}
-
-          # Force lowercase for OCI compatibility
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-
-          REMOTE_IMAGE=ghcr.io/$OWNER/$REPO
-
-          echo "Pushing multi-arch image:"
-          echo "  local:  $LOCAL_IMAGE:$TAG"
-          echo "  remote: $REMOTE_IMAGE:$TAG"
-
-          buildah push --all \
-            $LOCAL_IMAGE:$TAG \
-            docker://$REMOTE_IMAGE:$TAG
-
-          echo "Verifying manifest:"
-          buildah manifest inspect $LOCAL_IMAGE:$TAG
-
-
 
       # This section is optional and only needs to be enabled if you plan on distributing
       # your project for others to consume. You will need to create a public and private key
       # using Cosign and save the private key as a repository secret in Github for this workflow
       # to consume. For more details, review the image signing section of the README.
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        with:
-          cosign-release: 'v2.6.1'
-
-      - name: Sign container image
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      #- name: Install Cosign
+      #  uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+      #  if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      #  with:
+      #    cosign-release: 'v2.6.1'
+      #
+      #- name: Sign container image
+      #  if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      #  run: |
+      #    IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}"
+      #    for tag in ${{ steps.metadata.outputs.tags }}; do
+      #      cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
+      #    done
+      #  env:
+      #    TAGS: ${{ steps.push.outputs.digest }}
+      #    COSIGN_EXPERIMENTAL: false
+      #    COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+      
+      # ------------------------------
+      # Multi-arch push + sign workflow
+      # ------------------------------
+      - name: Set up variables
         run: |
-          IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}"
-          for tag in ${{ steps.metadata.outputs.tags }}; do
-            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
+          IMAGE_NAME="kokoplay"
+          TAGS="${{ steps.metadata.outputs.tags }}"
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          REMOTE_IMAGE="ghcr.io/$OWNER/$REPO"
+
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
+          echo "REMOTE_IMAGE=$REMOTE_IMAGE" >> $GITHUB_ENV
+
+      - name: Install Build Dependencies
+        run: |
+          sudo dnf -y update
+          sudo dnf install -y skopeo jq
+
+      - name: Push multi-arch image to GHCR
+        run: |
+          echo "Pushing multi-arch image to $REMOTE_IMAGE"
+          for tag in $TAGS; do
+            buildah push --all $IMAGE_NAME:$tag docker://$REMOTE_IMAGE:$tag
+          done
+
+      - name: Sign images with Cosign
+        run: |
+          for tag in $TAGS; do
+            echo "Resolving digest for $REMOTE_IMAGE:$tag"
+            DIGEST=$(skopeo inspect docker://$REMOTE_IMAGE:$tag | jq -r '.Digest')
+            echo "Signing $REMOTE_IMAGE@$DIGEST"
+            cosign sign -y --key env://COSIGN_PRIVATE_KEY $REMOTE_IMAGE@$DIGEST
           done
         env:
-          TAGS: ${{ steps.push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_EXPERIMENTAL: false
