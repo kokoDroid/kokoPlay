@@ -182,7 +182,7 @@ jobs:
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
 
-          REMOTE_IMAGE=ghcr.io/$OWNER/$REPO/$LOCAL_IMAGE
+          REMOTE_IMAGE=ghcr.io/$OWNER/$REPO
 
           echo "Pushing multi-arch image:"
           echo "  local:  $LOCAL_IMAGE:$TAG"
@@ -193,8 +193,9 @@ jobs:
             docker://$REMOTE_IMAGE:$TAG
 
           echo "Verifying manifest:"
-          buildah manifest inspect containers-storage:kokoplay:latest
-          
+          buildah manifest inspect $LOCAL_IMAGE:$TAG
+
+
 
       # This section is optional and only needs to be enabled if you plan on distributing
       # your project for others to consume. You will need to create a public and private key
