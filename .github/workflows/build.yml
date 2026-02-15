@@ -181,7 +181,7 @@ jobs:
           # Force lowercase for OCI compatibility
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          
+
           REMOTE_IMAGE=ghcr.io/$OWNER/$REPO/$LOCAL_IMAGE
 
           echo "Pushing multi-arch image:"
@@ -193,8 +193,8 @@ jobs:
             docker://$REMOTE_IMAGE:$TAG
 
           echo "Verifying manifest:"
-          buildah manifest inspect docker://$REMOTE_IMAGE:$TAG
-
+          buildah manifest inspect containers-storage:kokoplay:latest
+          
 
       # This section is optional and only needs to be enabled if you plan on distributing
       # your project for others to consume. You will need to create a public and private key
