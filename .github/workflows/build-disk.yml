@@ -121,9 +121,10 @@ jobs:
           sudo podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG
 
 
-      - name: Debug podman images as root after
+      - name: Debug podman images as root
         run: |
-          sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}} {{.Architecture}} {{.OS}}"
+          TAG="${{ inputs.platform }}-latest"
+          sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}}"
 
 
       - name: Build disk images
