@@ -216,17 +216,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y skopeo jq
 
-      - name: Push multi-arch image to GHCR
+      - name: Create arch-specific tags from manifest
         run: |
-          echo "Pushing multi-arch image to $REMOTE_IMAGE"
+          TAGS="${{ steps.metadata.outputs.tags }}"
+
           for tag in $TAGS; do
-            # Push AMD64
-            buildah push $IMAGE_NAME:$tag-linuxamd64 docker://$REMOTE_IMAGE:amd64-$tag
-            # Push ARM64
-            buildah push $IMAGE_NAME:$tag-linuxarm64 docker://$REMOTE_IMAGE:arm64-$tag
-            # Optionally, push a plain tag for convenience (latest points to multi-arch manifest)
+            echo "Extracting amd64 image"
+            buildah manifest inspect $IMAGE_NAME:$tag
+            buildah manifest create $IMAGE_NAME:amd64-$tag
+            buildah manifest add $IMAGE_NAME:amd64-$tag $IMAGE_NAME:$tag --arch amd64
+
+            echo "Extracting arm64 image"
+            buildah manifest create $IMAGE_NAME:arm64-$tag
+            buildah manifest add $IMAGE_NAME:arm64-$tag $IMAGE_NAME:$tag --arch arm64
+          done
+
+
+      - name: Push images to GHCR
+        run: |
+          for tag in $TAGS; do
+            # push per-arch images (THIS IS WHAT ISO NEEDS)
+            buildah push $IMAGE_NAME:amd64-$tag docker://$REMOTE_IMAGE:amd64-$tag
+            buildah push $IMAGE_NAME:arm64-$tag docker://$REMOTE_IMAGE:arm64-$tag
+
+            # also push multi-arch manifest (optional but fine)
             buildah push --all $IMAGE_NAME:$tag docker://$REMOTE_IMAGE:$tag
           done
+
     
       #- name: Push multi-arch image to GHCR
       #  run: |
@@ -248,3 +264,20 @@ jobs:
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_EXPERIMENTAL: false
+
+      - name: Sign arch-specific images with Cosign
+        run: |
+          export PATH=$HOME/.local/bin:$PATH
+
+          for tag in $TAGS; do
+            for arch in amd64 arm64; do
+              echo "Resolving digest for $REMOTE_IMAGE:${arch}-$tag"
+              DIGEST=$(skopeo inspect docker://$REMOTE_IMAGE:${arch}-$tag | jq -r '.Digest')
+              echo "Signing $REMOTE_IMAGE@$DIGEST ($arch)"
+              cosign sign -y --key env://COSIGN_PRIVATE_KEY $REMOTE_IMAGE@$DIGEST
+            done
+          done
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_EXPERIMENTAL: false
+
