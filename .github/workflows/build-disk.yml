@@ -109,14 +109,19 @@ jobs:
           podman image inspect ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} \
             | jq '.[] | {RepoTags, Architecture, Os, Digest}'
 
+      - name: Debug podman images as root before
+        run: |
+          sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}} {{.Architecture}} {{.OS}}"
+
 
       - name: Make image visible to sudo/root
         run: |
           TAG="${{ inputs.platform }}-latest"
-          sudo podman tag ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG \
-                        ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG        
+          # Copy from user storage to root storage
+          sudo podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG
 
-      - name: Debug podman images as root
+
+      - name: Debug podman images as root after
         run: |
           sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}} {{.Architecture}} {{.OS}}"
 
