@@ -220,8 +220,20 @@ jobs:
         run: |
           echo "Pushing multi-arch image to $REMOTE_IMAGE"
           for tag in $TAGS; do
+            # Push AMD64
+            buildah push $IMAGE_NAME:$tag-linuxamd64 docker://$REMOTE_IMAGE:amd64-$tag
+            # Push ARM64
+            buildah push $IMAGE_NAME:$tag-linuxarm64 docker://$REMOTE_IMAGE:arm64-$tag
+            # Optionally, push a plain tag for convenience (latest points to multi-arch manifest)
             buildah push --all $IMAGE_NAME:$tag docker://$REMOTE_IMAGE:$tag
           done
+    
+      #- name: Push multi-arch image to GHCR
+      #  run: |
+      #    echo "Pushing multi-arch image to $REMOTE_IMAGE"
+      #    for tag in $TAGS; do
+      #      buildah push --all $IMAGE_NAME:$tag docker://$REMOTE_IMAGE:$tag
+      #    done
 
       - name: Sign images with Cosign
         run: |
