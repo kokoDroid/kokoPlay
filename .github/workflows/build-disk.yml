@@ -88,6 +88,13 @@ jobs:
       #    echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
       #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
+      - name: Ensure latest points to correct platform for bootc
+        run: |
+          PLATFORM="${{ inputs.platform }}"  # arm64 or amd64
+          # Tag platform-specific image as 'latest' locally
+          sudo podman tag \
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${PLATFORM}-latest \
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
 
       - name: Build disk images
