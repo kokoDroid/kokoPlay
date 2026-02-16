@@ -89,33 +89,6 @@ jobs:
       #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
 
-     
-
-      #- name: Debug podman images as root before
-      #  run: |
-      #    sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}} {{.Architecture}} {{.OS}}"
-
-
-
-      #- name: Debug podman images as root
-      #  run: |
-      #    TAG="${{ inputs.platform }}-latest"
-      #    sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}}"
-
-      #- name: Pull bootc base image into root podman storage
-      #  run: |
-      #    sudo podman pull \
-      #      ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
-
-      - name: Export kokoplay image for bootc
-        run: |
-          TAG="${{ inputs.platform }}-latest"
-          TAR_FILE="kokoplay-${TAG}.tar"
-          echo "Saving $TAG as tar for bootc"
-          podman pull ${{ env.IMAGE_REGISTRY }}/kokoplay:$TAG
-          podman save -o "$TAR_FILE" ${{ env.IMAGE_REGISTRY }}/kokoplay:$TAG
-          ls -lh "$TAR_FILE"
-
 
       - name: Build disk images
         id: build
@@ -123,9 +96,8 @@ jobs:
         with:
           builder-image: ${{ env.BIB_IMAGE }}
           config-file: ${{ matrix.disk-type == 'anaconda-iso' && './disk_config/iso-kde.toml' || './disk_config/disk.toml' }}
-          #image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
+          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           #image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
-          image: oci-archive:./kokoplay-${{ inputs.platform }}.tar
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
           additional-args: --use-librepo=True --rootfs=btrfs 
