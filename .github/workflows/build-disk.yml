@@ -101,6 +101,11 @@ jobs:
       #  run: |
       #    TAG="${{ inputs.platform }}-latest"
       #    sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}}"
+      
+      - name: Pull bootc base image into root podman storage
+        run: |
+          sudo podman pull \
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
 
 
       - name: Build disk images
