@@ -88,11 +88,7 @@ jobs:
       #    echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
       #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
-      - name: Pull kokoplay image for this platform
-        run: |
-          TAG="${{ inputs.platform }}-latest"
-          echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG"
-          podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG
+    
 
       - name: Ensure local tag exists for bootc-image-builder
         run: |
@@ -100,31 +96,18 @@ jobs:
           podman tag ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG \
                      ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: Debug pulled image
-        run: |
-          echo "Listing all images locally"
-          podman images
+     
 
-          echo "Inspecting the specific image"
-          podman image inspect ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} \
-            | jq '.[] | {RepoTags, Architecture, Os, Digest}'
-
-      - name: Debug podman images as root before
-        run: |
-          sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}} {{.Architecture}} {{.OS}}"
+      #- name: Debug podman images as root before
+      #  run: |
+      #    sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}} {{.Architecture}} {{.OS}}"
 
 
-      - name: Make image visible to sudo/root
-        run: |
-          TAG="${{ inputs.platform }}-latest"
-          # Copy from user storage to root storage
-          sudo podman pull ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG
 
-
-      - name: Debug podman images as root
-        run: |
-          TAG="${{ inputs.platform }}-latest"
-          sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}}"
+      #- name: Debug podman images as root
+      #  run: |
+      #    TAG="${{ inputs.platform }}-latest"
+      #    sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}}"
 
 
       - name: Build disk images
@@ -139,7 +122,7 @@ jobs:
           types: ${{ matrix.disk-type }}
           additional-args: --use-librepo=True --rootfs=btrfs
           #additional-args: "--use-librepo=True --rootfs=btrfs --platform linux/${{ inputs.platform }}"
-
+          pull: true
 
       # ✅ NEW: Upload ISO artifact
       - name: Upload ISO
