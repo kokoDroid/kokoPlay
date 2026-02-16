@@ -102,10 +102,6 @@ jobs:
       #    TAG="${{ inputs.platform }}-latest"
       #    sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}}"
 
-      - name: Resolve image digest
-        run: |
-          DIGEST=$(skopeo inspect docker://ghcr.io/kokodroid/kokoplay:${{ inputs.platform }}-latest | jq -r .Digest)
-          echo "IMAGE_WITH_DIGEST=ghcr.io/kokodroid/kokoplay@$DIGEST" >> $GITHUB_ENV
 
       - name: Build disk images
         id: build
@@ -115,11 +111,10 @@ jobs:
           config-file: ${{ matrix.disk-type == 'anaconda-iso' && './disk_config/iso-kde.toml' || './disk_config/disk.toml' }}
           #image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           #image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
-          image: ${{ env.IMAGE_WITH_DIGEST }}
+          image: containers-storage:ghcr.io/kokodroid/kokoplay:${{ inputs.platform }}-latest
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
           additional-args: --use-librepo=True --rootfs=btrfs 
-          #pull: true
 
       # ✅ NEW: Upload ISO artifact
       - name: Upload ISO
