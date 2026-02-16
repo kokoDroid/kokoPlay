@@ -110,10 +110,10 @@ jobs:
       - name: Export kokoplay image for bootc
         run: |
           TAG="${{ inputs.platform }}-latest"
-          TAR_FILE="./kokoplay-${{ inputs.platform }}.tar"
+          TAR_FILE="kokoplay-${TAG}.tar"
           echo "Saving $TAG as tar for bootc"
-          podman pull ${{ env.IMAGE_REGISTRY }}:$TAG
-          podman save -o "$TAR_FILE" ${{ env.IMAGE_REGISTRY }}:$TAG
+          podman pull ${{ env.IMAGE_REGISTRY }}/kokoplay:$TAG
+          podman save -o "$TAR_FILE" ${{ env.IMAGE_REGISTRY }}/kokoplay:$TAG
           ls -lh "$TAR_FILE"
 
 
