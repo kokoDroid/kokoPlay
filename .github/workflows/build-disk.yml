@@ -88,13 +88,6 @@ jobs:
       #    echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
       #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
-    
-
-      - name: Ensure local tag exists for bootc-image-builder
-        run: |
-          TAG="${{ inputs.platform }}-latest"
-          podman tag ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG \
-                     ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
      
 
@@ -120,9 +113,9 @@ jobs:
           image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
-          additional-args: --use-librepo=True --rootfs=btrfs
+          additional-args: --use-librepo=True --rootfs=btrfs --pull=always 
           #additional-args: "--use-librepo=True --rootfs=btrfs --platform linux/${{ inputs.platform }}"
-          pull: true
+          #pull: true
 
       # ✅ NEW: Upload ISO artifact
       - name: Upload ISO
