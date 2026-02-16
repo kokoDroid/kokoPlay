@@ -88,6 +88,11 @@ jobs:
       #    echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
       #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
+      - name: Import ARM64 image into root podman storage
+        run: |
+          sudo podman pull docker://ghcr.io/kokodroid/kokoplay:arm64-latest
+
+
       - name: Ensure latest points to correct platform for bootc
         run: |
           PLATFORM="${{ inputs.platform }}"  # arm64 or amd64
