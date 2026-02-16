@@ -101,11 +101,20 @@ jobs:
       #  run: |
       #    TAG="${{ inputs.platform }}-latest"
       #    sudo podman images --format "table {{.Repository}}:{{.Tag}} {{.ID}}"
-      
-      - name: Pull bootc base image into root podman storage
+
+      #- name: Pull bootc base image into root podman storage
+      #  run: |
+      #    sudo podman pull \
+      #      ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
+
+      - name: Export kokoplay image for bootc
         run: |
-          sudo podman pull \
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
+          TAG="${{ inputs.platform }}-latest"
+          TAR_FILE="./kokoplay-${{ inputs.platform }}.tar"
+          echo "Saving $TAG as tar for bootc"
+          podman pull ${{ env.IMAGE_REGISTRY }}:$TAG
+          podman save -o "$TAR_FILE" ${{ env.IMAGE_REGISTRY }}:$TAG
+          ls -lh "$TAR_FILE"
 
 
       - name: Build disk images
@@ -116,7 +125,7 @@ jobs:
           config-file: ${{ matrix.disk-type == 'anaconda-iso' && './disk_config/iso-kde.toml' || './disk_config/disk.toml' }}
           #image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
           #image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.platform }}-latest
-          image: containers-storage:ghcr.io/kokodroid/kokoplay:${{ inputs.platform }}-latest
+          image: oci-archive:./kokoplay-${{ inputs.platform }}.tar
           chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
           types: ${{ matrix.disk-type }}
           additional-args: --use-librepo=True --rootfs=btrfs 
