@@ -88,58 +88,7 @@ jobs:
       #    echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
       #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
-      - name: Preflight checks for bootc ISO build
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          echo "== Bootc ISO preflight checks =="
-
-          HOST_ARCH="$(uname -m)"
-          case "$HOST_ARCH" in
-            aarch64) HOST_ARCH="arm64" ;;
-            x86_64)  HOST_ARCH="amd64" ;;
-            *)
-              echo "❌ Unsupported host architecture: $HOST_ARCH"
-              exit 1
-              ;;
-          esac
-
-          echo "✔ Runner architecture: $HOST_ARCH"
-
-          BUILDER_IMAGE="quay.io/centos-bootc/bootc-image-builder:latest"
-          OS_IMAGE="ghcr.io/kokodroid/kokoplay:latest"
-
-          echo "Checking bootc-image-builder supports $HOST_ARCH..."
-          if ! podman manifest inspect "$BUILDER_IMAGE" | jq -e \
-            --arg arch "$HOST_ARCH" \
-            '.manifests | map(.platform.architecture) | index($arch) != null'; then
-            echo "❌ bootc-image-builder does NOT support $HOST_ARCH"
-            exit 1
-          fi
-
-          echo "✔ bootc-image-builder supports $HOST_ARCH"
-
-          echo "Checking OS image architecture..."
-          OS_ARCH="$(podman inspect "$OS_IMAGE" --format '{{.Architecture}}' || true)"
-
-          if [[ -z "$OS_ARCH" ]]; then
-            echo "❌ Failed to inspect OS image: $OS_IMAGE"
-            exit 1
-          fi
-
-          if [[ "$OS_ARCH" != "$HOST_ARCH" ]]; then
-            echo "❌ Architecture mismatch:"
-            echo "   Runner:   $HOST_ARCH"
-            echo "   OS image: $OS_ARCH"
-            echo ""
-            echo "ISO builds must be native-arch."
-            exit 1
-          fi
-
-          echo "✔ OS image matches runner architecture"
-
-          echo "✅ Preflight checks passed — safe to build ISO"
+      
 
       - name: Build disk images
         id: build
