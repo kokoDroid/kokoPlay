@@ -88,18 +88,6 @@ jobs:
       #    echo "Pulling ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }} for platform ${{ inputs.platform }}"
       #    podman pull --platform linux/${{ inputs.platform }} ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.DEFAULT_TAG }}
 
-      - name: Import ARM64 image into root podman storage
-        run: |
-          sudo podman pull docker://ghcr.io/kokodroid/kokoplay:arm64-latest
-
-
-      - name: Ensure latest points to correct platform for bootc
-        run: |
-          PLATFORM="${{ inputs.platform }}"  # arm64 or amd64
-          # Tag platform-specific image as 'latest' locally
-          sudo podman tag \
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${PLATFORM}-latest \
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
 
       - name: Build disk images
@@ -151,70 +139,70 @@ jobs:
           sudo apt-get install -y rclone
           rclone copy $SOURCE_DIR S3:${{ secrets.S3_BUCKET_NAME }}
   
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      # ✅ REQUIRED
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0   # REQUIRED for tag creation
-
-      - name: Download ISO artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: kokoplay-iso
-          path: release
-      
-      - name: Debug artifact contents
-        run: |
-          echo "=== release tree ==="
-          find release -maxdepth 4 -type f
-
-      - name: Generate SHA256SUMS
-        run: |
-         cd release
-         ISO=$(find . -name '*.iso' | head -n 1)
-
-         if [ -z "$ISO" ]; then
-           echo "❌ No ISO found in artifact"
-           exit 1
-         fi
-
-         echo "Found ISO: $ISO"
-         sha256sum "$ISO" > SHA256SUMS
-         cat SHA256SUMS
-
-        # ✅ CREATE TAG
-      - name: Create git tag
-        run: |
-          git tag ${{ inputs.tag }}
-          git push origin ${{ inputs.tag }}
-
-      - name: Debug release files 2
-        run: |
-          echo "PWD=$(pwd)"
-          echo "=== RELEASE TREE ==="
-          find release -type f -ls
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.tag }}
-          name: ${{ inputs.title }}
-          body: |
-            KoKoPlay OS ISO release.
-
-            ### Integrity check
-            ```bash
-            sha256sum -c SHA256SUMS
-            ```
-          files: |
-            release/**/*.iso
-            release/**/*.json
-            release/SHA256SUMS         
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # release:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #
+  #   steps:
+  #     # ✅ REQUIRED
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v6
+  #       with:
+  #         fetch-depth: 0   # REQUIRED for tag creation
+  #
+  #     - name: Download ISO artifact
+  #       uses: actions/download-artifact@v7
+  #       with:
+  #         name: kokoplay-iso
+  #         path: release
+  #     
+  #     - name: Debug artifact contents
+  #       run: |
+  #         echo "=== release tree ==="
+  #         find release -maxdepth 4 -type f
+  #
+  #     - name: Generate SHA256SUMS
+  #       run: |
+  #        cd release
+  #        ISO=$(find . -name '*.iso' | head -n 1)
+  #
+  #        if [ -z "$ISO" ]; then
+  #          echo "❌ No ISO found in artifact"
+  #          exit 1
+  #        fi
+  #
+  #        echo "Found ISO: $ISO"
+  #        sha256sum "$ISO" > SHA256SUMS
+  #        cat SHA256SUMS
+  #
+  #       # ✅ CREATE TAG
+  #     - name: Create git tag
+  #       run: |
+  #         git tag ${{ inputs.tag }}
+  #         git push origin ${{ inputs.tag }}
+  #
+  #     - name: Debug release files 2
+  #       run: |
+  #         echo "PWD=$(pwd)"
+  #         echo "=== RELEASE TREE ==="
+  #         find release -type f -ls
+  #
+  #     - name: Create GitHub Release
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         tag_name: ${{ inputs.tag }}
+  #         name: ${{ inputs.title }}
+  #         body: |
+  #           KoKoPlay OS ISO release.
+  #
+  #           ### Integrity check
+  #           ```bash
+  #           sha256sum -c SHA256SUMS
+  #           ```
+  #         files: |
+  #           release/**/*.iso
+  #           release/**/*.json
+  #           release/SHA256SUMS         
+  #
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
