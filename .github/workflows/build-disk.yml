@@ -112,12 +112,12 @@ jobs:
 
           echo "Checking bootc-image-builder supports $HOST_ARCH..."
           if ! podman manifest inspect "$BUILDER_IMAGE" | jq -e \
-              --arg arch "$HOST_ARCH" \
-              '.manifests[].platform.architecture == $arch' >/dev/null; then
+            --arg arch "$HOST_ARCH" \
+            '.manifests | map(.platform.architecture) | index($arch) != null'; then
             echo "❌ bootc-image-builder does NOT support $HOST_ARCH"
-            echo "   Image: $BUILDER_IMAGE"
             exit 1
           fi
+
           echo "✔ bootc-image-builder supports $HOST_ARCH"
 
           echo "Checking OS image architecture..."
