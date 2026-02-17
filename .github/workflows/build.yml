@@ -161,19 +161,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      #- name: Push To GHCR
-      #  uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
-      #  if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-      #  id: push
-      #  env:
-      #    REGISTRY_USER: ${{ github.actor }}
-      #    REGISTRY_PASSWORD: ${{ github.token }}
-      #  with:
-      #    registry: ${{ env.IMAGE_REGISTRY }}
-      #    image: ${{ env.IMAGE_NAME }}
-      #    tags: ${{ steps.metadata.outputs.tags }}
-      #    username: ${{ env.REGISTRY_USER }}
-      #    password: ${{ env.REGISTRY_PASSWORD }}
+      - name: Push To GHCR
+        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        id: push
+        env:
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ github.token }}
+        with:
+          registry: ${{ env.IMAGE_REGISTRY }}
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          username: ${{ env.REGISTRY_USER }}
+          password: ${{ env.REGISTRY_PASSWORD }}
 
 
       # This section is optional and only needs to be enabled if you plan on distributing
@@ -187,95 +187,19 @@ jobs:
           cosign-release: 'v2.6.1'
 
       #
-      #- name: Sign container image
-      #  if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-      #  run: |
-      #    IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}"
-      #    for tag in ${{ steps.metadata.outputs.tags }}; do
-      #      cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
-      #    done
-      #  env:
-      #    TAGS: ${{ steps.push.outputs.digest }}
-      #    COSIGN_EXPERIMENTAL: false
-      #    COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-
-      # ------------------------------
-      # Multi-arch push + sign workflow
-      # ------------------------------
-      - name: Set up variables
+      - name: Sign container image
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         run: |
-          IMAGE_NAME="kokoplay"
-          TAGS="${{ steps.metadata.outputs.tags }}"
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          REMOTE_IMAGE="ghcr.io/$OWNER/$REPO"
-
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "TAGS=$TAGS" >> $GITHUB_ENV
-          echo "REMOTE_IMAGE=$REMOTE_IMAGE" >> $GITHUB_ENV
-          
-      - name: Install skopeo on Ubuntu runner
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y skopeo jq
-
-
-      - name: Extract per-arch images locally
-        run: |
-          set -euo pipefail
+          IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}"
           for tag in ${{ steps.metadata.outputs.tags }}; do
-            echo "Extracting amd64 image for $tag"
-            # Ensure multi-arch image exists
-            buildah manifest inspect ${{ env.IMAGE_NAME }}:$tag || exit 1
-            # Create per-arch manifests
-            buildah manifest create ${{ env.IMAGE_NAME }}:amd64-$tag
-            buildah manifest add ${{ env.IMAGE_NAME }}:amd64-$tag ${{ env.IMAGE_NAME }}:$tag --arch amd64
-
-            echo "Extracting arm64 image for $tag"
-            buildah manifest create ${{ env.IMAGE_NAME }}:arm64-$tag
-            buildah manifest add ${{ env.IMAGE_NAME }}:arm64-$tag ${{ env.IMAGE_NAME }}:$tag --arch arm64
+            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
           done
-   
+        env:
+          TAGS: ${{ steps.push.outputs.digest }}
+          COSIGN_EXPERIMENTAL: false
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
-
-      - name: Push images to GHCR
-        run: |
-          set -euo pipefail
-
-          for tag in $TAGS; do
-            echo "=== Processing tag $tag ==="
-
-            # 1. Create per-tag arch image aliases
-            buildah tag $IMAGE_NAME:latest-linuxamd64 $IMAGE_NAME:${tag}-linuxamd64
-            buildah tag $IMAGE_NAME:latest-linuxarm64 $IMAGE_NAME:${tag}-linuxarm64
-
-            # 2. Use a temporary manifest name to avoid collision with existing image
-            TMP_MANIFEST="${IMAGE_NAME}:manifest-$tag"
-
-            # 3. Create manifest
-            buildah manifest create $TMP_MANIFEST
-
-            # 4. Add arch images to manifest
-            buildah manifest add $TMP_MANIFEST $IMAGE_NAME:${tag}-linuxamd64
-            buildah manifest add $TMP_MANIFEST $IMAGE_NAME:${tag}-linuxarm64
-
-            # 5. Push manifest
-            echo "Pushing manifest $tag"
-            buildah manifest push --all \
-              $TMP_MANIFEST \
-              docker://$REMOTE_IMAGE:$tag
-
-            # 6. Push arch-specific tags (bootc NEEDS these)
-            echo "Pushing amd64 image"
-            buildah push \
-              $IMAGE_NAME:${tag}-linuxamd64 \
-              docker://$REMOTE_IMAGE:amd64-$tag
-
-            echo "Pushing arm64 image"
-            buildah push \
-              $IMAGE_NAME:${tag}-linuxarm64 \
-              docker://$REMOTE_IMAGE:arm64-$tag
-          done
+     
 
     
       #- name: Push multi-arch image to GHCR
@@ -285,33 +209,5 @@ jobs:
       #      buildah push --all $IMAGE_NAME:$tag docker://$REMOTE_IMAGE:$tag
       #    done
 
-      - name: Sign images with Cosign
-        run: |
-          export PATH=$HOME/.local/bin:$PATH
-
-          for tag in $TAGS; do
-            echo "Resolving digest for $REMOTE_IMAGE:$tag"
-            DIGEST=$(skopeo inspect docker://$REMOTE_IMAGE:$tag | jq -r '.Digest')
-            echo "Signing $REMOTE_IMAGE@$DIGEST"
-            cosign sign -y --key env://COSIGN_PRIVATE_KEY $REMOTE_IMAGE@$DIGEST
-          done
-        env:
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-          COSIGN_EXPERIMENTAL: false
-
-      - name: Sign arch-specific images with Cosign
-        run: |
-          export PATH=$HOME/.local/bin:$PATH
-
-          for tag in $TAGS; do
-            for arch in amd64 arm64; do
-              echo "Resolving digest for $REMOTE_IMAGE:${arch}-$tag"
-              DIGEST=$(skopeo inspect docker://$REMOTE_IMAGE:${arch}-$tag | jq -r '.Digest')
-              echo "Signing $REMOTE_IMAGE@$DIGEST ($arch)"
-              cosign sign -y --key env://COSIGN_PRIVATE_KEY $REMOTE_IMAGE@$DIGEST
-            done
-          done
-        env:
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-          COSIGN_EXPERIMENTAL: false
+      
 
