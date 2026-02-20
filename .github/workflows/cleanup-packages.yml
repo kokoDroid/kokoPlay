@@ -14,5 +14,5 @@ jobs:
           package-name: 'kokoplay'
           package-type: 'container'
           delete-only-untagged-versions: 'false'
-          min-versions-to-keep: 30
+          min-versions-to-keep: 40
           token: ${{ secrets.GITHUB_TOKEN }}
