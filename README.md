@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://bazzite.gg/"><img src="/repo_files/kokoplay-logo.svg?raw=true" alt="KokoPlay"/></a>
+</p>
+
 # KokoPlay
 
 A custom Fedora Atomic image designed for gaming, development and daily use.
@@ -35,6 +39,8 @@ There are some other apps included by default such as:
     -alien
     -rclone
     -faugus-launcher
+
+Lutris is removed in flavor of faugus launcher.
 
 It also adds just files to install more currated flatpaks and brews.
 It adds support to map directories from Local NAS and mount them during boot. 
