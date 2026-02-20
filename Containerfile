@@ -43,6 +43,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/install-apps.sh && \
     /ctx/fix-opt.sh && \
     /ctx/build-initramfs.sh && \
+    /ctx/remove-packages.sh && \
     /ctx/cleanup.sh
     
 ### LINTING
