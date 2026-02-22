@@ -165,8 +165,22 @@ jobs:
 
           PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
 
-          cd $SOURCE_DIR
+          echo "SOURCE_DIR: $SOURCE_DIR"
+          ls -lah
+          echo "---- OUTPUT CONTENTS ----"
+          ls -lah "$SOURCE_DIR"
+          echo "---- RECURSIVE ----"
+          find "$SOURCE_DIR" -type f
+  
 
+          cd $SOURCE_DIR
+          ISO_FILES=$(find . -type f -name "*.iso")
+
+          if [ -z "$ISO_FILES" ]; then
+            echo "No ISO files found!"
+            find . -type f
+            exit 1
+          fi
           # Generate checksum for all ISOs
           sha256sum *.iso > sha256.txt
 
