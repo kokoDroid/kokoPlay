@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      upload-to-sf:
+        description: "Upload to SourceForge"
+        required: false
+        default: false
+        type: boolean 
       platform:
         required: true
         type: choice
@@ -138,7 +143,49 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rclone
           rclone copy $SOURCE_DIR S3:${{ secrets.S3_BUCKET_NAME }}
-  
+
+      - name: Upload to SourceForge
+        if: inputs.upload-to-sf == true && github.event_name != 'pull_request'
+        shell: bash
+        env:
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
+          SOURCE_DIR: ${{ steps.build.outputs.output-directory }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+          # Strip leading "v" if present (v1.0.0 → 1.0.0)
+          VERSION=${RELEASE_TAG#v}
+
+          mkdir -p ~/.ssh
+          echo "$SF_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts
+
+          # Define project path (change if needed)
+          PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
+
+          # Create release directory if it does not exist
+          ssh $SF_USERNAME@frs.sourceforge.net "mkdir -p $PROJECT_PATH"
+
+          # Generate sha256 checksum for ISO(s)
+          cd $SOURCE_DIR
+          sha256sum *.iso > sha256.txt
+
+          # Upload EVERYTHING from source directory
+          rsync -avz \
+            --progress \
+            $SOURCE_DIR/ \
+            $SF_USERNAME@frs.sourceforge.net:$PROJECT_PATH/
+
+          # Upload files
+         # rsync -avz \
+         #   $SOURCE_DIR/install.iso \
+         #   $SOURCE_DIR/sha256.txt \
+         #   $SF_USERNAME@frs.sourceforge.net:$PROJECT_PATH/
+
   # release:
   #   needs: build
   #   runs-on: ubuntu-latest
