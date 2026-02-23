@@ -165,28 +165,18 @@ jobs:
 
           PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
 
-          echo "SOURCE_DIR: $SOURCE_DIR"
-          ls -lah
-          echo "---- OUTPUT CONTENTS ----"
-          ls -lah "$SOURCE_DIR"
-          echo "---- RECURSIVE ----"
-          find "$SOURCE_DIR" -type f
-  
+          cd "$SOURCE_DIR"
 
-          cd $SOURCE_DIR
-          ISO_FILES=$(find . -type f -name "*.iso")
+          echo "Files produced by build:"
+          find . -type f
 
-          if [ -z "$ISO_FILES" ]; then
-            echo "No ISO files found!"
-            find . -type f
-            exit 1
-          fi
-          # Generate checksum for all ISOs
-          sha256sum *.iso > sha256.txt
+          echo "Generating sha256.txt..."
+          find . -type f ! -name "sha256.txt" -print0 | \
+            xargs -0 sha256sum > sha256.txt
 
-          # Upload everything (rsync will create directory automatically)
+          echo "Uploading to SourceForge..."
           rsync -avz --progress \
-            -e "ssh -i sf_key -o StrictHostKeyChecking=no" \
+             -e "ssh -i sf_key -o StrictHostKeyChecking=no" \
             ./ \
             $SF_USERNAME@frs.sourceforge.net:$PROJECT_PATH/
 
