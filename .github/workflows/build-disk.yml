@@ -161,7 +161,14 @@ jobs:
           VERSION=${RELEASE_TAG#v}
           echo "Key file:"
           KEY_FILE="$RUNNER_TEMP/sf_key"
-          printf "%s" "${{ secrets.SF_SSH_KEY }}" | tr -d '\r' > "$KEY_FILE"
+
+          # write secret safely
+          cat << 'EOF' > "$KEY_FILE"
+          ${{ secrets.SF_SSH_KEY }}
+          EOF
+
+
+          #printf "%s" "${{ secrets.SF_SSH_KEY }}" | tr -d '\r' > "$KEY_FILE"
           #printf "%s" "$SF_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
         
