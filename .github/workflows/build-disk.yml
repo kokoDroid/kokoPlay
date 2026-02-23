@@ -160,11 +160,10 @@ jobs:
 
           VERSION=${RELEASE_TAG#v}
           echo "Key size: ${#SF_SSH_KEY}"
-          #printf '%q\n' "$SF_SSH_KEY" | head -n 3
 
           KEY_FILE="$RUNNER_TEMP/sf_key"
-
-          printf "%s" "$SF_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+          printf "%s" "${{ secrets.SF_SSH_KEY }}" | tr -d '\r' > "$KEY_FILE"
+          #printf "%s" "$SF_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
         
 
