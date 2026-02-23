@@ -149,7 +149,7 @@ jobs:
         shell: bash
         env:
           SF_USERNAME: ${{ secrets.SF_USERNAME }}
-          SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
+          #SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
           SOURCE_DIR: ${{ steps.build.outputs.output-directory }}
           RELEASE_TAG: ${{ inputs.tag }}
 
@@ -159,8 +159,7 @@ jobs:
           sudo apt-get install -y rsync openssh-client
 
           VERSION=${RELEASE_TAG#v}
-          echo "Key size: ${#SF_SSH_KEY}"
-
+          echo "Key file:"
           KEY_FILE="$RUNNER_TEMP/sf_key"
           printf "%s" "${{ secrets.SF_SSH_KEY }}" | tr -d '\r' > "$KEY_FILE"
           #printf "%s" "$SF_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
