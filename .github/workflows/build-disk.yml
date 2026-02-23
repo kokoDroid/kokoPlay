@@ -162,14 +162,13 @@ jobs:
           echo "Key file:"
           KEY_FILE="$RUNNER_TEMP/sf_key"
 
-          # write secret safely
-          cat << 'EOF' > "$KEY_FILE"
-          ${{ secrets.SF_SSH_KEY }}
-          EOF
+          echo "write secret safely"
+          #cat << 'EOF' > "$KEY_FILE"
+          #${{secrets.SF_SSH_KEY }}
+          #EOF
 
 
-          #printf "%s" "${{ secrets.SF_SSH_KEY }}" | tr -d '\r' > "$KEY_FILE"
-          #printf "%s" "$SF_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+          printf "%s" "${{secrets.SF_SSH_KEY }}" | tr -d '\r' > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
         
 
@@ -178,8 +177,6 @@ jobs:
 
           #echo "${{ secrets.SF_SSH_KEY }}" > sf_key
           #echo "$SF_SSH_KEY" > sf_key
-          #printf "%s" "${{ secrets.SF_SSH_KEY }}" | tr -d '\r' > sf_key
-          #chmod 600 sf_key
 
           echo "Files produced by build:"
           find . -type f
