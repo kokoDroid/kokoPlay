@@ -184,6 +184,12 @@ jobs:
           echo "Files produced by build:"
           find . -type f
 
+          echo "Current directory: $(pwd)"
+          echo "All files recursively:"
+          find .
+          echo "Testing wildcard:"
+          ls *.iso || echo "No *.iso in current dir"
+
           echo "Generating sha256.txt..."
           find . -type f ! -name "sha256.txt" -print0 | \
             xargs -0 sha256sum > sha256.txt
