@@ -159,13 +159,14 @@ jobs:
           sudo apt-get install -y rsync openssh-client
 
           VERSION=${RELEASE_TAG#v}
+          #echo "Key length: ${#SF_SSH_KEY}"  
+          
+          PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
+          cd "$SOURCE_DIR"
 
+          #echo "${{ secrets.SF_SSH_KEY }}" > sf_key
           echo "$SF_SSH_KEY" > sf_key
           chmod 600 sf_key
-
-          PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
-
-          cd "$SOURCE_DIR"
 
           echo "Files produced by build:"
           find . -type f
