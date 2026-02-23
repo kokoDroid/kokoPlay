@@ -159,14 +159,22 @@ jobs:
           sudo apt-get install -y rsync openssh-client
 
           VERSION=${RELEASE_TAG#v}
-          #echo "Key length: ${#SF_SSH_KEY}"  
-          
+          echo "Key size: ${#SF_SSH_KEY}"
+          printf '%q\n' "$SF_SSH_KEY" | head -n 3
+
+          KEY_FILE="$RUNNER_TEMP/sf_key"
+
+          printf "%s" "$SF_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+        
+
           PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
           cd "$SOURCE_DIR"
 
           #echo "${{ secrets.SF_SSH_KEY }}" > sf_key
-          echo "$SF_SSH_KEY" > sf_key
-          chmod 600 sf_key
+          #echo "$SF_SSH_KEY" > sf_key
+          #printf "%s" "${{ secrets.SF_SSH_KEY }}" | tr -d '\r' > sf_key
+          #chmod 600 sf_key
 
           echo "Files produced by build:"
           find . -type f
@@ -177,7 +185,7 @@ jobs:
 
           echo "Uploading to SourceForge..."
           rsync -avz --progress \
-             -e "ssh -i sf_key -o StrictHostKeyChecking=no" \
+             -e "ssh -i $KEY_FILE -o StrictHostKeyChecking=no" \
             ./ \
             $SF_USERNAME@frs.sourceforge.net:$PROJECT_PATH/
 
