@@ -148,10 +148,10 @@ jobs:
         if: inputs.upload-to-sf == true && github.event_name != 'pull_request'
         shell: bash
         env:
-          SF_USERNAME: ${{ secrets.SF_USERNAME }}
-          #SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
-          SOURCE_DIR: ${{ steps.build.outputs.output-directory }}
-          RELEASE_TAG: ${{ inputs.tag }}
+          SF_USERNAME: ${{secrets.SF_USERNAME}}
+          SF_SSH_KEY: ${{secrets.SF_SSH_KEY}}
+          SOURCE_DIR: ${{steps.build.outputs.output-directory}}
+          RELEASE_TAG: ${{inputs.tag}}
 
 
         run: |
@@ -159,25 +159,16 @@ jobs:
           sudo apt-get install -y rsync openssh-client
 
           VERSION=${RELEASE_TAG#v}
-          echo "Key file:"
-          KEY_FILE="$RUNNER_TEMP/sf_key"
 
-          echo "write secret safely"
-          #cat << 'EOF' > "$KEY_FILE"
-          #${{secrets.SF_SSH_KEY }}
-          #EOF
-
-
-          printf "%s" "${{secrets.SF_SSH_KEY }}" | tr -d '\r' > "$KEY_FILE"
-          chmod 600 "$KEY_FILE"
-        
+          mkdir -p ~/.ssh
+          echo "$SF_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts
 
           PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
+  
           cd "$SOURCE_DIR"
-
-          #echo "${{ secrets.SF_SSH_KEY }}" > sf_key
-          #echo "$SF_SSH_KEY" > sf_key
-
+  
           echo "Files produced by build:"
           find . -type f
 
@@ -186,15 +177,16 @@ jobs:
           find .
           echo "Testing wildcard:"
           ls *.iso || echo "No *.iso in current dir"
-
+  
+  
           echo "Generating sha256.txt..."
           find . -type f ! -name "sha256.txt" -print0 | \
             xargs -0 sha256sum > sha256.txt
+  
 
-          echo "Uploading to SourceForge..."
           rsync -avz --progress \
-             -e "ssh -i $KEY_FILE -o StrictHostKeyChecking=no" \
-            ./ \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            $SOURCE_DIR/ \
             $SF_USERNAME@frs.sourceforge.net:$PROJECT_PATH/
 
           
