@@ -186,12 +186,12 @@ jobs:
 
           rsync -avz --progress \
             -e "ssh -i ~/.ssh/id_ed25519" \
-            $SOURCE_DIR/ \
+            ./ \
             $SF_USERNAME@frs.sourceforge.net:$PROJECT_PATH/
 
           
 
-          # Upload files
+          # Upload files $SOURCE_DIR/ \
          # rsync -avz \
          #   $SOURCE_DIR/install.iso \
          #   $SOURCE_DIR/sha256.txt \
