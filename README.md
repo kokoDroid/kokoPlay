@@ -60,7 +60,7 @@ Just recipes:
 
 There is installation disk "install.iso" for download
 
-<https://sourceforge.net/projects/kokoplayos/files/Releases/1.0.0/>
+<https://sourceforge.net/projects/kokoplayos/files/Releases/1.0.7/>
 
 Please use Fedora Image Writer to make bootable ISO disk and install KokoPlay OS.
 
@@ -79,4 +79,8 @@ Image is signed via cosign key.
 ## Acknowledgments
 
 This project is based on the Universal Blue image template and builds upon the great work of the Universal Blue community.
+
+## Disclaimer
+
+This software comes with no warranty. Use on your own responsibility.
 
