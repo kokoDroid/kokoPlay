@@ -15,12 +15,16 @@ on:
       - '.github/workflows/cleanup-packages.yml'
       - '.github/workflows/build-disk.yml'
       - '.github/workflows/make-release.yml'
+      - '.github/workflows/build.yml' 
   workflow_dispatch:
-
+    inputs:
+      build_variants:
+        description: "Variants to build (amd, nvidia, nvidia-open or all)"
+        required: false
+        default: "amd"
 env:
   IMAGE_DESC: "My Customized Universal Blue Image"
   IMAGE_KEYWORDS: "bootc,ublue,universal-blue"
-#  IMAGE_LOGO_URL: "https://avatars.githubusercontent.com/u/120078124?s=200&v=4"  # Put your own image here for a fancy profile on https://artifacthub.io/!
   IMAGE_LOGO_URL: "https://raw.githubusercontent.com/kokodroid/kokoplay/main/repo_files/kokoplay-logo.png" # Put your own image here for a fancy profile on https://artifacthub.io/!
 
   IMAGE_NAME: "${{ github.event.repository.name }}"  # output image name, usually same as repo name
@@ -41,6 +45,12 @@ jobs:
       packages: write
       id-token: write
 
+    strategy:
+      matrix:
+        gpu: ${{ 
+          github.event_name == 'push' && fromJson('["amd"]') ||
+          (github.event.inputs.build_variants == 'all' && fromJson('["amd","nvidia","nvidia-open"]')) ||
+          fromJson(format('["{0}"]', github.event.inputs.build_variants))}}
     steps:
       - name: Prepare environment
         run: |
@@ -51,6 +61,20 @@ jobs:
       # These stage versions are pinned by https://github.com/renovatebot/renovate
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        
+      - name: Set BASE_IMAGE
+        run: |
+          case "${{ matrix.gpu }}" in
+            amd)
+              echo "BASE_IMAGE=ghcr.io/ublue-os/bazzite:stable" >> $GITHUB_ENV
+              ;;
+            nvidia)
+              echo "BASE_IMAGE=ghcr.io/ublue-os/bazzite-nvidia:stable" >> $GITHUB_ENV
+              ;;
+            nvidia-open)
+              echo "BASE_IMAGE=ghcr.io/ublue-os/bazzite-nvidia-open:stable" >> $GITHUB_ENV
+              ;;
+          esac
 
       # You only use this action if the container-storage-action proves to be unreliable, you don't need to enable both
       # This is optional, but if you see that your builds are way too big for the runners, you can enable this by uncommenting the following lines:
