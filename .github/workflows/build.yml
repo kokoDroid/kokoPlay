@@ -61,7 +61,7 @@ jobs:
       # These stage versions are pinned by https://github.com/renovatebot/renovate
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-        
+
       - name: Set BASE_IMAGE
         run: |
           case "${{ matrix.gpu }}" in
@@ -146,7 +146,16 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: false
-          platforms: linux/amd64 #linux/arm64
+          platforms: linux/amd64 #linux/arm64   
+          build-args: |
+            BASE_IMAGE=${
+            { 
+              matrix.gpu == 'amd' && 'ghcr.io/ublue-os/bazzite:stable' || 
+              matrix.gpu == 'nvidia' && 'ghcr.io/ublue-os/bazzite-nvidia:stable' || 
+              matrix.gpu == 'nvidia-open' && 'ghcr.io/ublue-os/bazzite-nvidia-open:stable'
+            }}
+            GPU_VARIANT=${{ matrix.gpu }}
+
 
       - name: List local images
         run: podman images
