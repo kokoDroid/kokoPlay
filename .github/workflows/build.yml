@@ -149,9 +149,16 @@ jobs:
           oci: false
           platforms: linux/amd64 #linux/arm64   
           build-args: |
-            BASE_IMAGE=${BASE_IMAGE}
-            GPU_VARIANT=${GPU_VARIANT}
-
+            BASE_IMAGE=$(
+              if [ "${{ matrix.gpu }}" = "amd" ]; then
+                echo "ghcr.io/ublue-os/bazzite:stable"
+              elif [ "${{ matrix.gpu }}" = "nvidia" ]; then
+                echo "ghcr.io/ublue-os/bazzite-nvidia:stable"
+              else
+                echo "ghcr.io/ublue-os/bazzite-nvidia-open:stable"
+              fi
+            )
+            GPU_VARIANT=${{ matrix.gpu }}
 
       - name: List local images
         run: podman images
