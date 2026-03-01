@@ -62,20 +62,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
-      - name: Set BASE_IMAGE
+
+      - name: Generate Containerfile for matrix job
         run: |
-          case "${{ matrix.gpu }}" in
-            amd)
-              echo "BASE_IMAGE=ghcr.io/ublue-os/bazzite:stable" >> $GITHUB_ENV
-              ;;
-            nvidia)
-              echo "BASE_IMAGE=ghcr.io/ublue-os/bazzite-nvidia:stable" >> $GITHUB_ENV
-              ;;
-            nvidia-open)
-              echo "BASE_IMAGE=ghcr.io/ublue-os/bazzite-nvidia-open:stable" >> $GITHUB_ENV
-              ;;
-          esac
-          echo "GPU_VARIANT=${{ matrix.gpu }}" >> $GITHUB_ENV
+          if [ "${{ matrix.gpu }}" = "amd" ]; then
+            base_image="ghcr.io/ublue-os/bazzite:stable"
+          elif [ "${{ matrix.gpu }}" = "nvidia" ]; then
+            base_image="ghcr.io/ublue-os/bazzite-nvidia:stable"
+          else
+            base_image="ghcr.io/ublue-os/bazzite-nvidia-open:stable"
+          fi
+
+          sed "s|@BASE_IMAGE@|$base_image|" Containerfile.template > Containerfile-${{ matrix.gpu }}
 
       # You only use this action if the container-storage-action proves to be unreliable, you don't need to enable both
       # This is optional, but if you see that your builds are way too big for the runners, you can enable this by uncommenting the following lines:
@@ -140,7 +138,7 @@ jobs:
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
           containerfiles: |
-            ./Containerfile
+            ./Containerfile-${{ matrix.gpu }}
           # Postfix image name with -custom to make it a little more descriptive
           # Syntax: https://docs.github.com/en/actions/learn-github-actions/expressions#format
           image: ${{ env.IMAGE_NAME }}
