@@ -60,7 +60,7 @@ Just recipes:
 
 There is installation disk "install.iso" for download
 
-<https://sourceforge.net/projects/kokoplayos/files/Releases/1.0.7/>
+<https://sourceforge.net/projects/kokoplayos/files/Releases/1.0.8/>
 
 Please use Fedora Image Writer to make bootable ISO disk and install KokoPlay OS.
 
