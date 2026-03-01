@@ -4,9 +4,9 @@ COPY build_files /
 COPY rpms /rpms
 
 # Base Image
-#FROM ghcr.io/ublue-os/bazzite:stable
-ARG BASE_IMAGE=${BASE_IMAGE}
-FROM ${BASE_IMAGE}
+FROM ghcr.io/ublue-os/bazzite:stable
+#ARG BASE_IMAGE
+#FROM ${BASE_IMAGE}
 
 COPY system_files/ /
 # Copy files from the first stage
