@@ -19,7 +19,16 @@ on:
         description: "Upload to SourceForge"
         required: false
         default: false
-        type: boolean 
+        type: boolean
+      gpu:
+        description: "GPU variant"
+        required: true
+        default: amd
+        type: choice
+        options:
+          - amd
+          - nvidia
+          - nvidia-open 
       platform:
         required: true
         type: choice
@@ -58,6 +67,13 @@ jobs:
       id-token: write
 
     steps:
+      - name: Set container reference
+        run: |
+          if [ "${{ github.event.inputs.gpu }}" != "amd" ]; then
+            echo "IMAGE_NAME=${IMAGE_NAME}-${{ github.event.inputs.gpu }}"
+            #echo "GPU_SUFFIX=-${{ github.event.inputs.gpu }}"
+          fi
+
       - name: Prepare environment
         run: |
           USER_UID=$(id -u)
@@ -70,6 +86,7 @@ jobs:
           echo "DISK_TYPE=${DISK_TYPE}" >> ${GITHUB_ENV}
           echo "USER_UID=${USER_UID}" >> ${GITHUB_ENV}
           echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
+          echo "GPU_SUFFIX=${GPU_SUFFIX}" >> ${GITHUB_ENV}
 
       - name: Install dependencies
         if: inputs.platform == 'arm64'
@@ -152,6 +169,7 @@ jobs:
           SF_SSH_KEY: ${{secrets.SF_SSH_KEY}}
           SOURCE_DIR: ${{steps.build.outputs.output-directory}}
           RELEASE_TAG: ${{inputs.tag}}
+          GPU_TAG:    ${{inputs.gpu}}
 
 
         run: |
@@ -159,13 +177,14 @@ jobs:
           sudo apt-get install -y rsync openssh-client
 
           VERSION=${RELEASE_TAG#v}
+          GPU_DIR=${GPU_TAG}
 
           mkdir -p ~/.ssh
           echo "$SF_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts
 
-          PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$VERSION"
+          PROJECT_PATH="/home/frs/project/k/ko/kokoplayos/Releases/$GPU_TAG/$VERSION"
   
           cd "$SOURCE_DIR"
   
