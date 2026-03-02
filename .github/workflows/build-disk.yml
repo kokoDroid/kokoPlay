@@ -70,7 +70,7 @@ jobs:
       - name: Set container reference
         run: |
           if [ "${{ github.event.inputs.gpu }}" != "amd" ]; then
-            echo "IMAGE_NAME=${IMAGE_NAME}-${{ github.event.inputs.gpu }}"
+            echo "IMAGE_NAME=${IMAGE_NAME}-${{ github.event.inputs.gpu }}" >> ${GITHUB_ENV}
             #echo "GPU_SUFFIX=-${{ github.event.inputs.gpu }}"
           fi
 
