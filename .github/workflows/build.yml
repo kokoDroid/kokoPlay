@@ -221,27 +221,27 @@ jobs:
           cosign-release: 'v2.6.1'
 
       #
-      - name: Sign container image
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        run: |
-          IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_FULL_NAME }}"
-          for tag in ${{ steps.metadata.outputs.tags }}; do
-            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
-          done
-        env:
-          TAGS: ${{ steps.push.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-
-     
       #- name: Sign container image
       #  if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
       #  run: |
-      #    IMAGE_REF="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_FULL_NAME }}@${{ steps.push.outputs.digest }}"
-      #    cosign sign -y --key env://COSIGN_PRIVATE_KEY "$IMAGE_REF"
+      #    IMAGE_FULL="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_FULL_NAME }}"
+      #    for tag in ${{ steps.metadata.outputs.tags }}; do
+      #      cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
+      #    done
       #  env:
+      #    TAGS: ${{ steps.push.outputs.digest }}
       #    COSIGN_EXPERIMENTAL: false
       #    COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+
+     
+      - name: Sign container image
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: |
+          IMAGE_REF="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_FULL_NAME }}@${{ steps.push.outputs.digest }}"
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY "$IMAGE_REF"
+        env:
+          COSIGN_EXPERIMENTAL: false
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
     
       #- name: Push multi-arch image to GHCR
       #  run: |
