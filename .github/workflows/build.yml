@@ -19,9 +19,17 @@ on:
   workflow_dispatch:
     inputs:
       build_variants:
-        description: "Variants to build (amd, nvidia, nvidia-open or all)"
+       # description: "Variants to build (amd, nvidia, nvidia-open or all)"
+       # required: false
+       # default: "amd"
+        description: "GPU variant"
         required: false
-        default: "amd"
+        default: amd
+        type: choice
+        options:
+          - amd
+          - nvidia
+          - nvidia-open 
 env:
   IMAGE_DESC: "My Customized Universal Blue Image"
   IMAGE_KEYWORDS: "bootc,ublue,universal-blue"
