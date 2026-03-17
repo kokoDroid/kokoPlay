@@ -39,6 +39,7 @@ There are some other apps included by default such as:
     -alien
     -rclone
     -faugus-launcher
+    -cockpit
 
 Lutris is removed in flavor of faugus launcher.
 

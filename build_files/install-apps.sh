@@ -27,6 +27,7 @@ declare -A RPM_PACKAGES=(
     rclone \
     alien \
     keepassxc \
+    cockpit \
     yt-dlp"
 
 
@@ -69,4 +70,6 @@ done
 
 log "Adding kokoPlay OS just recipes"
 echo "import \"/usr/share/kokoplay/just/kokoplay.just\"" >>/usr/share/ublue-os/justfile
+log "Starting services"
+systemctl enable cockpit.socket
 log "Build process completed"
