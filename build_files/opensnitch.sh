@@ -14,7 +14,7 @@ log "Fetching and installing OpenSnitch."
 get_github_asset_url() {
     local repo="$1"
     local pattern="$2"
-    local api_url="https://api.github.com/repos/${repo}/releases"
+    local api_url="https://api.github.com/repos/${repo}/releases/latest"
     local download_url
 
     download_url=$(curl -sL "${api_url}" | \
