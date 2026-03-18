@@ -14,12 +14,12 @@ log "Fetching and installing OpenSnitch."
 get_github_asset_url() {
     local repo="$1"
     local pattern="$2"
-    local api_url="https://api.github.com/repos/${repo}/releases/latest"
+    local api_url="https://api.github.com/repos/${repo}/releases"
     local download_url
 
     download_url=$(curl -sL "${api_url}" | \
         jq -r --arg regex "${pattern}" \
-        '.assets[] | select(.name | test($regex)) | .browser_download_url' | head -n 1)
+        '.assets // [] | .[] | select(.name | test($regex)) | .browser_download_url' | head -n 1)
 
     if [[ -z "${download_url}" || "${download_url}" == "null" ]]; then
         echo "Error: No asset found matching '${pattern}' in '${repo}'" >&2
