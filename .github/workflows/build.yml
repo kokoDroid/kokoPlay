@@ -30,6 +30,11 @@ on:
           - amd
           - nvidia
           - nvidia-open 
+      publish_public:
+        description: "Publish as public stable release"
+        required: false
+        default: false
+        type: boolean  
 env:
   IMAGE_DESC: "My Customized Universal Blue Image"
   IMAGE_KEYWORDS: "bootc,ublue,universal-blue"
@@ -66,6 +71,15 @@ jobs:
           echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
           echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
 
+      - name: Decide build type
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.publish_public }}" == "true" ]]; then
+            echo "BUILD_TYPE=public" >> $GITHUB_ENV
+          else
+            echo "BUILD_TYPE=dev" >> $GITHUB_ENV
+          fi
+  
+
       # These stage versions are pinned by https://github.com/renovatebot/renovate
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
@@ -85,12 +99,16 @@ jobs:
 
       - name: Set image name per variant
         run: |
+          suffix=""
+          if [ "$BUILD_TYPE" = "dev" ]; then
+            suffix="-dev"
+          fi
           if [ "${{ matrix.gpu }}" = "amd" ]; then
-            echo "IMAGE_FULL_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+            echo "IMAGE_FULL_NAME=${IMAGE_NAME}${suffix}" >> $GITHUB_ENV
           elif [ "${{ matrix.gpu }}" = "nvidia" ]; then
-            echo "IMAGE_FULL_NAME=${IMAGE_NAME}-nvidia" >> $GITHUB_ENV
+            echo "IMAGE_FULL_NAME=${IMAGE_NAME}-nvidia${suffix}" >> $GITHUB_ENV
           else
-            echo "IMAGE_FULL_NAME=${IMAGE_NAME}-nvidia-open" >> $GITHUB_ENV
+            echo "IMAGE_FULL_NAME=${IMAGE_NAME}-nvidia-open${suffix}" >> $GITHUB_ENV
           fi
       
       # You only use this action if the container-storage-action proves to be unreliable, you don't need to enable both
