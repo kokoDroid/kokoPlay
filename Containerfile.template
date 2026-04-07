@@ -22,4 +22,4 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     /ctx/cleanup.sh
 
 RUN bootc container lint
-RUN echo "kokoplay" > /etc/hostname
+
