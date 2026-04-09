@@ -1,0 +1,35 @@
+{
+  "logo": {
+    "type": "ascii",
+    "source": [
+      "  ██╗  ██╗╔████ ",
+      " ██║ ██╔╝╔████████ ",
+      " █████╔╝ ╔████████████ ",
+      " ██╔═██╗ ╔████████ ",
+      " ██║  ██╗ ╔████ ",
+      " ╚═╝  ╚═╝"
+    ]
+  },
+  "modules": [
+    "title",
+    "os",
+    "host",
+    "kernel",
+    "display",
+    "cpu",
+    "gpu",
+    "ram",
+    "disk",
+    "uptime",
+    "shell",
+    "terminal",
+    "packages",
+    "battery",
+    "locale",
+    "de",
+    "wm",
+    "theme",
+    "icons",
+    "colors"
+  ]
+}
