@@ -5,7 +5,7 @@ Wants=graphical-session.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/smbmount.sh
+ExecStart=/usr/libexec/kokoplay/smbmount.sh
 RemainAfterExit=yes
 StandardOutput=journal
 StandardError=journal
