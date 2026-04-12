@@ -28,6 +28,7 @@ declare -A RPM_PACKAGES=(
     alien \
     keepassxc \
     cockpit \
+    expect \
     yt-dlp"
 
 
