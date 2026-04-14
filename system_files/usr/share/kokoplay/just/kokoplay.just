@@ -97,6 +97,9 @@ alias proton := kokoplay-proton-drive
 # Proton drive handling (ujust proton help)
 [group('kokoPlay')]
 kokoplay-proton-drive action:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
     case "{{ action }}" in
         create-secret)
             bash /usr/libexec/kokoplay/create-proton-db.sh
