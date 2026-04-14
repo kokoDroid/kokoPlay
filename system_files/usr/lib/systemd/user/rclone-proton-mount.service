@@ -1,0 +1,20 @@
+[Unit]
+Description=Mount Proton Drive using Rclone
+After=graphical-session.target
+Requires=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/kokoplay/proton-drive-mount.sh
+ExecStop=/usr/libexec/kokoplay/proton-drive-unmount.sh
+ExecReload=/usr/libexec/kokoplay/proton-drive-mount.sh
+Restart=on-failure
+RestartSec=30
+StartLimitIntervalSec=300
+StartLimitBurst=2
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin
+KillMode=process
+
+[Install]
+WantedBy=default.target
+
