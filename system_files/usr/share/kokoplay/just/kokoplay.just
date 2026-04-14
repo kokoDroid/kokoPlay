@@ -134,3 +134,4 @@ kokoplay-proton-drive action:
             echo "Unknown action: {{ action }}"
             exit 1
             ;;
+    esac
