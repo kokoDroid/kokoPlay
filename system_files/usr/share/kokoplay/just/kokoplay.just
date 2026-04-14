@@ -92,49 +92,61 @@ kokoplay-mount-dir:
     sudo -n /usr/bin/mount.cifs "$NAS" "$MOUNTPOINT" \
       -o user="$USERNAME",pass="$PASSWORD",uid=$(id -u),gid=$(id -g),iocharset=utf8
 
-alias proton := kokoplay-proton-drive
+alias pcs := kokoplay-proton-create-secret
 
-# Proton drive handling (ujust proton help)
-[group('kokoPlay')]
-kokoplay-proton-drive action:
+# Proton drive encrypted DB creation for credentials
+[group('kokoPlay-proton')]
+kokoplay-proton-create-secret:
     #!/usr/bin/env bash
-    set -euo pipefail
+    set -euo pipefail  
+    bash /usr/libexec/kokoplay/create-proton-db.sh
 
-    case "{{ action }}" in
-        create-secret)
-            bash /usr/libexec/kokoplay/create-proton-db.sh
-            ;;
-        rclone-config)
-            python3 /usr/libexec/kokoplay/rclone-proton-config.py
-            ;;
-        mount)
-            bash /usr/libexec/kokoplay/proton-drive-mount.sh
-            ;;
-        unmount)
-            bash /usr/libexec/kokoplay/proton-drive-unmount.sh
-            ;;
-        mount-on-boot)
-            systemctl --user daemon-reload
-            systemctl --user enable rclone-proton-mount.service
-            systemctl --user start rclone-proton-mount.service
-            ;;
-        help)
-            echo "Arguments:"
-            echo "create-secret : Create enrypted keepapssxc database to store proton passwords.This should be step 1"
-            echo
-            echo "rclone-config : This will configure proton remote, obtain access token and store it."
-            echo
-            echo "                It will use data from encrypted database for this.It will mount proton drive once"
-            echo "                This step should be repeated only when seesion is removed or token timeouts, usually in weeks or months"
-            echo
-            echo "mount         : It will mount proton drive. For manual mounting after OS startup"
-            echo
-            echo "unmount       : It will unmount proton drive"
-            echo "mount-on-boot : This will start service to mount proton drive an every boot"
-            echo "                You may consider also kokoplay-mount-cifs-sudo ujust command"
-            ;;
-        *)
-            echo "Unknown action: {{ action }}"
-            exit 1
-            ;;
-    esac
+# Proton drive remote configuration
+[group('kokoPlay-proton')]
+kokoplay-proton-rclone-config:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+    python3 /usr/libexec/kokoplay/rclone-proton-config.py
+
+# Proton drive mount
+[group('kokoPlay-proton')]
+kokoplay-proton-mount:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+    bash /usr/libexec/kokoplay/proton-drive-mount.sh
+
+# Proton drive unmount
+[group('kokoPlay-proton')]
+kokoplay-proton-unmount:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+    bash /usr/libexec/kokoplay/proton-drive-unmount.sh
+
+# Proton drive set mount on boot
+[group('kokoPlay-proton')]
+kokoplay-proton-mount-on-boot:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+    systemctl --user daemon-reload
+    systemctl --user enable rclone-proton-mount.service
+    systemctl --user start rclone-proton-mount.service          
+
+# Proton drive help
+[group('kokoPlay-proton')]
+kokoplay-proton-help:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+
+    echo "Arguments:"
+    echo "create-secret : Create enrypted keepapssxc database to store proton passwords.This should be step 1"
+    echo
+    echo "rclone-config : This will configure proton remote, obtain access token and store it."
+    echo
+    echo "                It will use data from encrypted database for this.It will mount proton drive once"
+    echo "                This step should be repeated only when seesion is removed or token timeouts, usually in weeks or months"
+    echo
+    echo "mount         : It will mount proton drive. For manual mounting after OS startup"
+    echo
+    echo "unmount       : It will unmount proton drive"
+    echo "mount-on-boot : This will start service to mount proton drive an every boot"
+    echo "                You may consider also kokoplay-mount-cifs-sudo ujust command"
