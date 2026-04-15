@@ -150,3 +150,13 @@ kokoplay-proton-help:
     echo "unmount       : It will unmount proton drive"
     echo "mount-on-boot : This will start service to mount proton drive an every boot"
     echo "                You may consider also kokoplay-mount-cifs-sudo ujust command"
+    echo
+    echo "cleanup        : Warning: Purges all proton related configuration data including credentials"
+    echo
+
+# Proton drive clean up and reset
+[group('kokoPlay-proton')]
+kokoplay-proton-cleanup:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+    bash /usr/libexec/kokoplay/proton-drive-cleanup.sh
