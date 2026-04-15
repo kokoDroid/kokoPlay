@@ -44,9 +44,11 @@ There are some other apps included by default such as:
 
 Lutris is removed in flavor of faugus launcher.
 
-It also adds just files to install more currated flatpaks and brews.
+It also adds just files to install selected flatpaks and brews.
 It adds support to map directories from Local NAS and mount them during boot. 
-There will be mapping for Proton drive added which is unsupported by Proton on Linux, so it is work in progress.
+Proton drive support added (alpha). 
+Now you can mount proton disk manually or automatically during boot.
+Plan is to add support for sync and backup features, so it is work in progress.
 Read me file will be updated during progress.
 
 Just recipes:
@@ -57,6 +59,14 @@ Just recipes:
  - kokoplay-mount-cifs-sudo                          # Make NAS mountable without root password during boot
  - kokoplay-mount-dir                                # Mount additional directory to installed local NAS
 
+ - [kokoPlay-proton]
+ - kokoplay-proton-cleanup                           # Proton drive clean up and reset
+ - kokoplay-proton-create-secret                     # Proton drive encrypted DB creation for credentials
+ - kokoplay-proton-help                              # Proton drive help
+ - kokoplay-proton-mount                             # Proton drive mount
+ - kokoplay-proton-mount-on-boot                     # Proton drive set mount on boot
+ - kokoplay-proton-rclone-config                     # Proton drive remote configuration
+ - kokoplay-proton-unmount                           # Proton drive unmount
 
 ## Installing the image
 
@@ -94,6 +104,9 @@ sudo bootc switch ghcr.io/kokodroid/kokoplay-nvidia-open:latest
 
 If you rebase from other image please apply kokoplay theme manually with layout option to get
 transparent panel.
+If you have installed kokoplay via ISO disk please update immediatelly to latest version 
+by clicking on "System update".
+ISO disks will be updated on major changes only.
 
 ## Verification
 
