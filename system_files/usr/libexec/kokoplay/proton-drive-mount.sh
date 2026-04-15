@@ -17,7 +17,20 @@ echo "[+] Mounting Proton Drive..."
 fusermount -u "$MOUNT_POINT" 2>/dev/null || true
 
 
-rclone mount proton: --protondrive-app-version macos-drive@1.0.0-alpha.1 "$MOUNT_POINT" \
-    --vfs-cache-mode writes \
-    --log-level ERROR \
-    --daemon
+#rclone mount proton: --protondrive-app-version macos-drive@1.0.0-alpha.1 "$MOUNT_POINT" \
+#    --vfs-cache-mode writes \
+#    --log-level ERROR \
+#    --daemon
+
+exec rclone mount proton: --protondrive-app-version macos-drive@1.0.0-alpha.1 "$MOUNT_POINT" \
+    --vfs-cache-mode full \
+    --vfs-cache-max-size 2G \
+    --vfs-cache-max-age 24h \
+    --dir-cache-time 1000h \
+    --poll-interval 30s \
+    --transfers 4 \
+    --checkers 4 \
+    --timeout 1m \
+    --retries 3 \
+    --low-level-retries 10 \
+    --log-level INFO

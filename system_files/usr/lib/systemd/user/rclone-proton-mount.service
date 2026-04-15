@@ -5,6 +5,7 @@ Requires=graphical-session.target
 
 [Service]
 Type=simple
+ExecStartPre=/usr/bin/bash -c 'until secret-tool search service proton >/dev/null 2>&1; do sleep 2; done'
 ExecStart=/usr/libexec/kokoplay/proton-drive-mount.sh
 ExecStop=/usr/libexec/kokoplay/proton-drive-unmount.sh
 ExecReload=/usr/libexec/kokoplay/proton-drive-mount.sh
