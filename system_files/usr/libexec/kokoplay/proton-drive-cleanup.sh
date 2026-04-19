@@ -51,4 +51,3 @@ echo "[+] Reloading systemd..."
 systemctl --user daemon-reload
 
 echo "✅ Proton Drive cleanup complete."
-```
