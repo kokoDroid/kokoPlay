@@ -144,8 +144,20 @@ def create_remote(dbpass):
             return
 
 
-        child.expect("e/n/d/r/c/s/q>")
-        child.sendline("q")
+        idx = child.expect([
+            r"e/n/d/r/c/s/q>",
+            r"c/u/q>",
+     ])
+
+        if idx == 0:
+            # main menu
+            child.sendline("q")
+
+        elif idx == 1:
+            # still inside encrypted submenu
+            child.sendline("q")
+            child.expect("e/n/d/r/c/s/q>")
+            child.sendline("q")
 
         child.close()
 

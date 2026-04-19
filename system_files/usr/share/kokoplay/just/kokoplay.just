@@ -153,14 +153,20 @@ kokoplay-proton-help:
     echo "                It will use data from encrypted database for this.It will mount proton drive once"
     echo "                This step should be repeated only when seesion is removed or token timeouts, usually in weeks or months"
     echo
+    echo "rclone-config-delete :"
+    echo "                Delete rclone config only This keeps secret keepass DB."
+    echo "                Use it if drive stop mounting (session removed) and configure again."
+    echo
     echo "mount         : It will mount proton drive. For manual mounting after OS startup"
     echo
     echo "unmount       : It will unmount proton drive"
+    echo
     echo "mount-on-boot : This will start service to mount proton drive an every boot"
     echo "                You may consider also kokoplay-mount-cifs-sudo ujust command"
     echo
     echo "mount-on-boot-disable :"
-    echo "                        Disable auto mount"
+    echo "                Disable auto mount"
+    echo
     echo "cleanup        : Warning: Purges all proton related configuration data including credentials"
     echo
 
@@ -170,3 +176,17 @@ kokoplay-proton-cleanup:
     #!/usr/bin/env bash
     set -euo pipefail  
     bash /usr/libexec/kokoplay/proton-drive-cleanup.sh
+
+# Proton drive rclone config delete
+[group('kokoPlay-proton')]
+kokoplay-proton-rclone-config-delete:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+
+    RCLONE_CONFIG="$HOME/.config/rclone/rclone.conf"
+
+    echo "[+] Removing rclone config..."
+    if [[ -f "$RCLONE_CONFIG" ]]; then
+        rm -f "$RCLONE_CONFIG"
+        echo "    Removed $RCLONE_CONFIG"
+    fi
