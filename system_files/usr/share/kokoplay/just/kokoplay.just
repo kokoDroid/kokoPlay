@@ -131,6 +131,15 @@ kokoplay-proton-mount-on-boot:
     systemctl --user enable rclone-proton-mount.service
     systemctl --user start rclone-proton-mount.service          
 
+# Proton drive set mount on boot disable
+[group('kokoPlay-proton')]
+kokoplay-proton-mount-on-boot-disable:
+    #!/usr/bin/env bash
+    set -euo pipefail  
+    systemctl --user stop rclone-proton-mount.service  
+    systemctl --user disable rclone-proton-mount.service
+    systemctl --user daemon-reload
+
 # Proton drive help
 [group('kokoPlay-proton')]
 kokoplay-proton-help:
@@ -141,7 +150,6 @@ kokoplay-proton-help:
     echo "create-secret : Create enrypted keepapssxc database to store proton passwords.This should be step 1"
     echo
     echo "rclone-config : This will configure proton remote, obtain access token and store it."
-    echo
     echo "                It will use data from encrypted database for this.It will mount proton drive once"
     echo "                This step should be repeated only when seesion is removed or token timeouts, usually in weeks or months"
     echo
@@ -151,6 +159,8 @@ kokoplay-proton-help:
     echo "mount-on-boot : This will start service to mount proton drive an every boot"
     echo "                You may consider also kokoplay-mount-cifs-sudo ujust command"
     echo
+    echo "mount-on-boot-disable :"
+    echo "                        Disable auto mount"
     echo "cleanup        : Warning: Purges all proton related configuration data including credentials"
     echo
 
