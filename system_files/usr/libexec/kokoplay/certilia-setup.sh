@@ -3,6 +3,7 @@ set -euo pipefail
 
 IMAGE_NAME="kokoplay-certilia"
 CONTAINER_NAME="kokoplay-certilia"
+PROFILE="/tmp/brave-certilia"
 
 echo "🔍 Checking Docker..."
 command -v docker >/dev/null || { echo "❌ Docker not installed"; exit 1; }
@@ -46,7 +47,7 @@ docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
 
 echo "🚀 Launching Brave (Certilia profile)..."
 
-PROFILE="/tmp/brave-certilia"
+#PROFILE="/tmp/brave-certilia"
 
 mkdir -p "$PROFILE"
 
@@ -188,15 +189,18 @@ EOF
 #!/usr/bin/env bash
 set -e
 
-#echo "🚀 Starting pcscd..."
-killall pcscd || true
+echo "🚀 Starting pcscd..."
+
+pkill -x pcscd 2>/dev/null || true
+
+# Ensure clean runtime directory
 rm -rf /run/pcscd
 mkdir -p /run/pcscd
-
 pcscd --disable-polkit &
 
 
 #sleep 2
+PROFILE="/tmp/brave-certilia"
 
 NSS_DIR="$PROFILE"
 mkdir -p "$NSS_DIR"
