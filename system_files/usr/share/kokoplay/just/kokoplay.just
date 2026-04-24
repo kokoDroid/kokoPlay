@@ -94,6 +94,13 @@ kokoplay-mount-dir:
 
 alias pcs := kokoplay-proton-create-secret
 
+# Install local NAS support parameters
+[group('kokoPlay')]
+kokoplay-certilia-setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash /usr/libexec/kokoplay/certilia-setup.sh
+
 # Proton drive encrypted DB creation for credentials
 [group('kokoPlay-proton')]
 kokoplay-proton-create-secret:
