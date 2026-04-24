@@ -46,8 +46,12 @@ docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
 
 echo "🚀 Launching Brave (Certilia profile)..."
 
+PROFILE="/tmp/brave-certilia"
+
+mkdir -p "$PROFILE"
+
 exec brave-browser \
-    --user-data-dir="\$HOME/.config/brave-certilia"
+    --user-data-dir="$PROFILE" \
 EOF
 
 sudo chmod +x /usr/local/bin/brave-certilia
@@ -185,12 +189,18 @@ EOF
 set -e
 
 #echo "🚀 Starting pcscd..."
-#pcscd &
+killall pcscd || true
+rm -rf /run/pcscd
+mkdir -p /run/pcscd
+
+pcscd --disable-polkit &
+
 
 #sleep 2
 
-NSS_DIR="$HOME/.pki/nssdb"
+NSS_DIR="$PROFILE"
 mkdir -p "$NSS_DIR"
+
 
 if [[ ! -f "$NSS_DIR/cert9.db" ]]; then
     echo "📁 Creating NSS DB..."
