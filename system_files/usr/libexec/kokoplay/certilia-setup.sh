@@ -190,18 +190,42 @@ EOF
 set -e
 
 echo "🚀 Starting pcscd..."
+# Stop pcscd cleanly if running
+if pgrep -x pcscd >/dev/null; then
+    pkill -x pcscd
+    echo "⏳ Waiting for pcscd to stop..."
+    while pgrep -x pcscd >/dev/null; do
+        sleep 0.2
+    done
+fi
 
-pkill -x pcscd 2>/dev/null || true
+# Clean stale socket ONLY if it exists and no process is using it
+if [ -S /run/pcscd/pcscd.comm ]; then
+    echo "🧹 Removing stale pcscd socket..."
+    rm -f /run/pcscd/pcscd.comm
+fi
 
-# Ensure clean runtime directory
-rm -rf /run/pcscd
-rm -f /run/pcscd/pcscd.comm
 
 mkdir -p /run/pcscd
 pcscd --disable-polkit &
+PCSC_PID=$!
 
+# Wait for socket to appear instead of blind sleep
+echo "⏳ Waiting for pcscd socket..."
+for i in {1..20}; do
+    if [ -S /run/pcscd/pcscd.comm ]; then
+        echo "✔ pcscd ready"
+        break
+    fi
+    sleep 0.3
+done
 
-sleep 4
+# Optional: fail if not ready
+if [ ! -S /run/pcscd/pcscd.comm ]; then
+    echo "❌ pcscd failed to start"
+    exit 1
+fi
+
 PROFILE="/tmp/brave-certilia"
 
 NSS_DIR="$PROFILE"
