@@ -3,7 +3,7 @@ set -euo pipefail
 
 IMAGE_NAME="kokoplay-certilia"
 CONTAINER_NAME="kokoplay-certilia"
-PROFILE="/tmp/brave-certilia"
+#PROFILE="/tmp/brave-certilia"
 
 echo "🔍 Checking Docker..."
 command -v docker >/dev/null || { echo "❌ Docker not installed"; exit 1; }
@@ -35,7 +35,7 @@ fi
 
 echo "📦 Installing brave-certilia launcher..."
 
-sudo tee /usr/local/bin/brave-certilia > /dev/null << EOF
+sudo tee /usr/local/bin/brave-certilia > /dev/null << 'EOF'
 #!/usr/bin/env bash
 
 CONTAINER_NAME="${CONTAINER_NAME}"
@@ -47,7 +47,7 @@ docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
 
 echo "🚀 Launching Brave (Certilia profile)..."
 
-#PROFILE="/tmp/brave-certilia"
+PROFILE="/tmp/brave-certilia"
 
 mkdir -p "$PROFILE"
 
@@ -195,11 +195,13 @@ pkill -x pcscd 2>/dev/null || true
 
 # Ensure clean runtime directory
 rm -rf /run/pcscd
+rm -f /run/pcscd/pcscd.comm
+
 mkdir -p /run/pcscd
 pcscd --disable-polkit &
 
 
-#sleep 2
+sleep 4
 PROFILE="/tmp/brave-certilia"
 
 NSS_DIR="$PROFILE"
@@ -225,6 +227,7 @@ modutil -dbdir "sql:$NSS_DIR" \
 
 echo "✅ Environment ready!"
 echo "👉 Insert eID and use Brave."
+echo "To run brave from CLI use:brave-certilia, for certilia client use: certiliaclient"
 exec sleep infinity
 
 EOF
