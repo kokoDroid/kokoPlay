@@ -53,6 +53,7 @@ mkdir -p "$PROFILE"
 
 exec brave-browser \
     --user-data-dir="$PROFILE" \
+    --no-sandbox \
 EOF
 
 sudo chmod +x /usr/local/bin/brave-certilia
@@ -114,6 +115,7 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon-x11-0 \
     x11-apps \
     pcsc-tools \
+    firefox-esr \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt update && apt upgrade -y
@@ -244,14 +246,38 @@ if [[ ! -f "$PKCS11_PATH" ]]; then
     exit 1
 fi
 
-echo "📌 Registering PKCS#11..."
-modutil -dbdir "sql:$NSS_DIR" \
+#echo "📌 Registering PKCS#11..."
+#modutil -dbdir "sql:$NSS_DIR" \
+#    -add "Certilia" \
+#    -libfile "$PKCS11_PATH" || true
+
+echo "Configuring Brave for first time use"
+rm -rf /tmp/brave-certilia
+nohup brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox >/dev/null 2>&1 &
+sleep 5
+
+pkill -x brave 2>/dev/null || true
+echo "📌 Registering PKCS#11 into REAL profile..."
+printf '\n' | modutil -dbdir "sql:$NSS_DIR" \
     -add "Certilia" \
     -libfile "$PKCS11_PATH" || true
 
+echo "Starting brave for certilia"
+ 
+brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox \
+    --enable-features=SmartCardSupport \
+    --pkcs11-providers=/opt/certiliamiddleware/pkcs11/libCertiliaPkcs11.so \
+    --enable-logging=stderr \
+    --v=1 \
+    --vmodule="*/pkcs11*=2" \
+    > /tmp/brave.log 2>&1 &
+
+echo "Starting certilia client"
+/usr/bin/certiliaclient >/dev/null 2>&1 &
+
 echo "✅ Environment ready!"
 echo "👉 Insert eID and use Brave."
-echo "To run brave from CLI use:brave-certilia, for certilia client use: certiliaclient"
+echo "To run brave container from host CLI use:brave-certilia, for certilia client use: certiliaclient"
 exec sleep infinity
 
 EOF
