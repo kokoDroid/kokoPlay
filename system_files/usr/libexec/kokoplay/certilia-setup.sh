@@ -3,7 +3,6 @@ set -euo pipefail
 
 IMAGE_NAME="kokoplay-certilia"
 CONTAINER_NAME="kokoplay-certilia"
-#PROFILE="/tmp/brave-certilia"
 
 echo "🔍 Checking Docker..."
 command -v docker >/dev/null || { echo "❌ Docker not installed"; exit 1; }
@@ -35,7 +34,7 @@ fi
 
 echo "📦 Installing brave-certilia launcher..."
 
-sudo tee /usr/local/bin/brave-certilia > /dev/null << 'EOF'
+sudo tee /usr/local/bin/brave-certilia > /dev/null << EOF
 #!/usr/bin/env bash
 
 CONTAINER_NAME="${CONTAINER_NAME}"
@@ -47,13 +46,17 @@ docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
 
 echo "🚀 Launching Brave (Certilia profile)..."
 
-PROFILE="/tmp/brave-certilia"
+exec docker exec -it "\$CONTAINER_NAME" brave-browser --no-sandbox "\$@" 
 
-mkdir -p "$PROFILE"
 
-exec brave-browser \
-    --user-data-dir="$PROFILE" \
-    --no-sandbox \
+
+
+#exec brave-browser --no-sandbox \
+#     --enable-logging=stderr \
+#     --v=1 \
+#     --vmodule="*/pkcs11*=2" \
+#     >/dev/null 2>&1 &
+
 EOF
 
 sudo chmod +x /usr/local/bin/brave-certilia
@@ -115,10 +118,10 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon-x11-0 \
     x11-apps \
     pcsc-tools \
-    firefox-esr \
+    firefox \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt update && apt upgrade -y
+#RUN apt update && apt upgrade -y
 
 # Brave
 RUN wget -qO- https://brave-browser-apt-release.s3.brave.com/brave-core.asc | gpg --dearmor > /usr/share/keyrings/brave.gpg && \
@@ -228,15 +231,16 @@ if [ ! -S /run/pcscd/pcscd.comm ]; then
     exit 1
 fi
 
-PROFILE="/tmp/brave-certilia"
+#mkdir -p ~/.pki/nssdb
+#mkdir -p "$NSS_DIR"
+NSS2_DIR="$HOME/.pki/nssdb"
+mkdir -p "$NSS2_DIR"
 
-NSS_DIR="$PROFILE"
-mkdir -p "$NSS_DIR"
+echo " NSS2DIR: $NSS2_DIR"
 
-
-if [[ ! -f "$NSS_DIR/cert9.db" ]]; then
+if [[ ! -f "$NSS2_DIR/cert9.db" ]]; then
     echo "📁 Creating NSS DB..."
-    certutil -N -d sql:"$NSS_DIR" --empty-password
+    certutil -N -d sql:"$NSS2_DIR" --empty-password
 fi
 
 PKCS11_PATH="/usr/lib/akd/certiliamiddleware/pkcs11/libEidPkcs11.so"
@@ -253,27 +257,34 @@ fi
 
 echo "Configuring Brave for first time use"
 rm -rf /tmp/brave-certilia
-nohup brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox >/dev/null 2>&1 &
+#nohup brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox >/dev/null 2>&1 &
+#nohup brave-browser --no-sandbox >/dev/null 2>&1 &
+
 sleep 5
 
 pkill -x brave 2>/dev/null || true
 echo "📌 Registering PKCS#11 into REAL profile..."
-printf '\n' | modutil -dbdir "sql:$NSS_DIR" \
+printf '\n' | modutil -dbdir "sql:$NSS2_DIR" \
     -add "Certilia" \
     -libfile "$PKCS11_PATH" || true
 
-echo "Starting brave for certilia"
+#echo "Starting brave for certilia"
  
-brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox \
-    --enable-features=SmartCardSupport \
-    --pkcs11-providers=/opt/certiliamiddleware/pkcs11/libCertiliaPkcs11.so \
-    --enable-logging=stderr \
-    --v=1 \
-    --vmodule="*/pkcs11*=2" \
-    > /tmp/brave.log 2>&1 &
+#brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox \
+#    --enable-features=SmartCardSupport \
+#    --pkcs11-providers=/opt/certiliamiddleware/pkcs11/libCertiliaPkcs11.so \
+#    --enable-logging=stderr \
+#    --v=1 \
+#    --vmodule="*/pkcs11*=2" \
+#    > /tmp/brave.log 2>&1 &
+#brave-browser --no-sandbox
+#     --enable-logging=stderr \
+#     --v=1 \
+#     --vmodule="*/pkcs11*=2" \
+#     >/dev/null 2>&1 &
 
-echo "Starting certilia client"
-/usr/bin/certiliaclient >/dev/null 2>&1 &
+#echo "Starting certilia client"
+#/usr/bin/certiliaclient >/dev/null 2>&1 &
 
 echo "✅ Environment ready!"
 echo "👉 Insert eID and use Brave."
