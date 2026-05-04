@@ -46,16 +46,9 @@ docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
 
 echo "🚀 Launching Brave (Certilia profile)..."
 
-exec docker exec -it "\$CONTAINER_NAME" brave-browser --no-sandbox "\$@" 
+exec docker exec -u 1000:1000 -it "\$CONTAINER_NAME" brave-browser "\$@" 
 
 
-
-
-#exec brave-browser --no-sandbox \
-#     --enable-logging=stderr \
-#     --v=1 \
-#     --vmodule="*/pkcs11*=2" \
-#     >/dev/null 2>&1 &
 
 EOF
 
@@ -231,9 +224,9 @@ if [ ! -S /run/pcscd/pcscd.comm ]; then
     exit 1
 fi
 
-#mkdir -p ~/.pki/nssdb
-#mkdir -p "$NSS_DIR"
-NSS2_DIR="$HOME/.pki/nssdb"
+
+
+NSS2_DIR="/home/ubuntu/.pki/nssdb"
 mkdir -p "$NSS2_DIR"
 
 echo " NSS2DIR: $NSS2_DIR"
@@ -251,14 +244,10 @@ if [[ ! -f "$PKCS11_PATH" ]]; then
 fi
 
 #echo "📌 Registering PKCS#11..."
-#modutil -dbdir "sql:$NSS_DIR" \
-#    -add "Certilia" \
-#    -libfile "$PKCS11_PATH" || true
+
 
 echo "Configuring Brave for first time use"
-rm -rf /tmp/brave-certilia
-#nohup brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox >/dev/null 2>&1 &
-#nohup brave-browser --no-sandbox >/dev/null 2>&1 &
+
 
 sleep 5
 
@@ -268,23 +257,9 @@ printf '\n' | modutil -dbdir "sql:$NSS2_DIR" \
     -add "Certilia" \
     -libfile "$PKCS11_PATH" || true
 
-#echo "Starting brave for certilia"
- 
-#brave-browser --user-data-dir=/tmp/brave-certilia --no-sandbox \
-#    --enable-features=SmartCardSupport \
-#    --pkcs11-providers=/opt/certiliamiddleware/pkcs11/libCertiliaPkcs11.so \
-#    --enable-logging=stderr \
-#    --v=1 \
-#    --vmodule="*/pkcs11*=2" \
-#    > /tmp/brave.log 2>&1 &
-#brave-browser --no-sandbox
-#     --enable-logging=stderr \
-#     --v=1 \
-#     --vmodule="*/pkcs11*=2" \
-#     >/dev/null 2>&1 &
+chown -R 1000:1000 /home/ubuntu/.pki
 
-#echo "Starting certilia client"
-#/usr/bin/certiliaclient >/dev/null 2>&1 &
+ 
 
 echo "✅ Environment ready!"
 echo "👉 Insert eID and use Brave."
