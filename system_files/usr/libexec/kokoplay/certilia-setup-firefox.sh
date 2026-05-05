@@ -32,27 +32,32 @@ else
     echo "✔ $USER already in docker group"
 fi
 
-echo "📦 Installing brave-certilia launcher..."
+echo "📦 Installing firefox-certilia launcher..."
 
-sudo tee /usr/local/bin/brave-certilia > /dev/null << EOF
+sudo tee /usr/local/bin/firefox-certilia > /dev/null << 'EOF'
 #!/usr/bin/env bash
 
-CONTAINER_NAME="${CONTAINER_NAME}"
-
+#CONTAINER_NAME="${CONTAINER_NAME}"
+CONTAINER_NAME="kokoplay-certilia"
+PROFILE="/tmp/firefox-certilia"
 xhost +SI:localuser:\$USER >/dev/null 2>&1
 
+
 # Ensure container is running
-docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
+docker start "$CONTAINER_NAME" >/dev/null 2>&1 || true
 
-echo "🚀 Launching Brave (Certilia profile)..."
-
-exec docker exec -u 1000:1000 -it "\$CONTAINER_NAME" brave-browser "\$@" 
-
-
+docker exec "$CONTAINER_NAME" bash -c '
+#rm -rf /tmp/firefox-certilia
+#mkdir -p /tmp/firefox-certilia
+chown -R 1000:1000 /tmp/firefox-certilia
+'
+docker exec -u 1000:1000 "$CONTAINER_NAME" bash -c '
+exec firefox --no-remote --new-instance --profile /tmp/firefox-certilia
+'
 
 EOF
+sudo chmod +x /usr/local/bin/firefox-certilia
 
-sudo chmod +x /usr/local/bin/brave-certilia
 echo "📦 Installing certiliaclient host wrapper..."
 
 sudo tee /usr/local/bin/certiliaclient > /dev/null << EOF
@@ -64,7 +69,9 @@ CONTAINER_NAME="${CONTAINER_NAME}"
 docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
 
 # Execute real binary inside container
+
 exec docker exec -it "\$CONTAINER_NAME" /usr/bin/certiliaclient "\$@"
+
 EOF
 
 sudo chmod +x /usr/local/bin/certiliaclient
@@ -76,10 +83,12 @@ if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
     echo "🏗️ Building Docker image..."
 
     cat > /tmp/Dockerfile.certilia << 'EOF'
-FROM ubuntu:latest
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 FROM debian:latest
+ARG UID
+ARG GID
 
 #RUN apt update && apt upgrade -y
 
@@ -112,14 +121,20 @@ RUN apt-get update && apt-get install -y \
     libxkbcommon-x11-0 \
     x11-apps \
     pcsc-tools \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
-#RUN apt update && apt upgrade -y
+
+RUN wget -O /tmp/firefox.tar.xz \
+  "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"
+
+RUN tar -xJf /tmp/firefox.tar.xz -C /opt
+RUN ln -sf /opt/firefox/firefox /usr/local/bin/firefox
 
 # Brave
-RUN wget -qO- https://brave-browser-apt-release.s3.brave.com/brave-core.asc | gpg --dearmor > /usr/share/keyrings/brave.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/brave.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" > /etc/apt/sources.list.d/brave.list && \
-    apt-get update && apt-get install -y brave-browser
+#RUN wget -qO- https://brave-browser-apt-release.s3.brave.com/brave-core.asc | gpg --dearmor > /usr/share/keyrings/brave.gpg && \
+#    echo "deb [signed-by=/usr/share/keyrings/brave.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" > /etc/apt/sources.list.d/brave.list && \
+#    apt-get update && apt-get install -y brave-browser
 
 
 # Certilia middleware
@@ -132,7 +147,9 @@ RUN wget -O /tmp/certilia.deb https://www.certilia.com/uploads/certiliamiddlewar
 RUN which certiliaclient || (echo "❌ certiliaclient missing!" && exit 1)
 
 #RUN useradd -m user && echo "user:user" | chpasswd && adduser user sudo
-RUN useradd -m user \
+
+
+RUN useradd user \
  && mkdir -p /home/user \
  && chown -R user:user /home/user
 
@@ -224,51 +241,41 @@ if [ ! -S /run/pcscd/pcscd.comm ]; then
     exit 1
 fi
 
+PROFILE="/tmp/firefox-certilia"
+PKCS11="/usr/lib/akd/certiliamiddleware/pkcs11/libEidPkcs11.so"
+rm -rf "$PROFILE"
+mkdir -p "$PROFILE"
 
-
-NSS2_DIR="/home/user/.pki/nssdb"
-mkdir -p "$NSS2_DIR"
-
-echo " NSS2DIR: $NSS2_DIR"
-
-if [[ ! -f "$NSS2_DIR/cert9.db" ]]; then
-    echo "📁 Creating NSS DB..."
-    certutil -N -d sql:"$NSS2_DIR" --empty-password
+# Create NSS DB if missing
+if [[ ! -f "$PROFILE/cert9.db" ]]; then
+    certutil -N -d sql:"$PROFILE" --empty-password
 fi
 
-PKCS11_PATH="/usr/lib/akd/certiliamiddleware/pkcs11/libEidPkcs11.so"
-
-if [[ ! -f "$PKCS11_PATH" ]]; then
-    echo "❌ Certilia PKCS11 not found!"
-    exit 1
+# Add module only if not already present
+if ! modutil -dbdir sql:"$PROFILE" -list | grep -q "Certilia"; then
+    echo "📌 Adding Certilia PKCS#11 module..."
+    printf '\n' | modutil \
+        -dbdir sql:"$PROFILE" \
+        -add "Certilia" \
+        -libfile "$PKCS11"
+else
+    echo "✔ Certilia module already registered"
 fi
 
-#echo "📌 Registering PKCS#11..."
-
-
-echo "Configuring Brave for first time use"
-
-
-sleep 5
-
-pkill -x brave 2>/dev/null || true
-echo "📌 Registering PKCS#11 into REAL profile..."
-printf '\n' | modutil -dbdir "sql:$NSS2_DIR" \
-    -add "Certilia" \
-    -libfile "$PKCS11_PATH" || true
-
-chown -R 1000:1000 /home/user/.pki
-
- 
+#echo "Starting certilia client"
+#/usr/bin/certiliaclient >/dev/null 2>&1 &
 
 echo "✅ Environment ready!"
 echo "👉 Insert eID and use Brave."
-echo "To run brave container from host CLI use:brave-certilia, for certilia client use: certiliaclient"
+echo "To run firefox container from host CLI use:firefox-certilia, for certilia client use: certiliaclient"
+echo "Put card reader with id into usb. Start certilia client, then start firefox"
 exec sleep infinity
 
 EOF
 
-    docker build -t "$IMAGE_NAME" -f /tmp/Dockerfile.certilia /tmp
+    docker build -t "$IMAGE_NAME" -f /tmp/Dockerfile.certilia /tmp  \
+                --build-arg UID=`id -u` \
+                --build-arg GID=`id -g` \
    #docker build --no-cache -t "$IMAGE_NAME" -f /tmp/Dockerfile.certilia /tmp
 
 fi
@@ -283,16 +290,22 @@ echo "🚀 Starting Certilia environment..."
 #  -v $HOME/.pki:/home/user/.pki \
 #    -v /run/pcscd:/run/pcscd \
 #    -v /run/pcscd/pcscd.comm:/run/pcscd/pcscd.comm \
-#    -e PCSCLITE_CSOCK_NAME=/run/pcscd/pcscd.comm \
+#    -e PCSCLITE_CSOCK_NAME=/run/pcscd/pcscd.comm \-v /run/user/1000:/run/user/1000
+ #   --user root \
+
 #--user $(id -u):$(id -g) \
+
 docker run -it \
     --name "$CONTAINER_NAME" \
     --device=/dev/bus/usb \
     --user root \
     --group-add plugdev \
     --network=host \
+    -v /run/user/1000:/run/user/1000 \
     -e DISPLAY=$DISPLAY \
     -e XDG_RUNTIME_DIR=/run/user/1000 \
+    -e DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus \
+    -v /run/user/1000/bus:/run/user/1000/bus \
     -e QT_QPA_PLATFORM=xcb \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v $XDG_RUNTIME_DIR:$XDG_RUNTIME_DIR \

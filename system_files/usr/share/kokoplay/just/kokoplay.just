@@ -99,7 +99,7 @@ alias pcs := kokoplay-proton-create-secret
 kokoplay-certilia-setup:
     #!/usr/bin/env bash
     set -euo pipefail
-    bash /usr/libexec/kokoplay/certilia-setup.sh
+    bash /usr/libexec/kokoplay/certilia-setup-firefox.sh
 
 # Proton drive encrypted DB creation for credentials
 [group('kokoPlay-proton')]
