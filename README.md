@@ -10,7 +10,7 @@ Work in progress.
 
 ## Base System
 
-It is based on Bazzite (KDE version)
+It is based on Bazzite 44 (KDE version)
 
 ## Features
 
@@ -52,21 +52,29 @@ Plan is to add support for sync and backup features, so it is work in progress.
 Read me file will be updated during progress.
 
 Just recipes:
+
  - [kokoPlay]
  - kokoplay-install-brews                            # Install selected Homebrews
  - kokoplay-install-flatpaks                         # Install selected Flatpaks apps
- - kokoplay-install-nas                              # Install local NAS support and mount persistent directory
+ - kokoplay-install-nas                              # Install local NAS support parameters
  - kokoplay-mount-cifs-sudo                          # Make NAS mountable without root password during boot
- - kokoplay-mount-dir                                # Mount additional directory to installed local NAS
+ - kokoplay-mount-dir                                # Mount additional directory to installed local NAS [alias: kpmd]
+
+ - [kokoPlay-Certilia]
+ - kokoplay-certilia-brave-setup                     # Install and configure certilia (CRO) with Brave browser in docker container
+ - kokoplay-certilia-firefox-setup                   # Install and configure certilia (CRO) with Firefox in docker container
 
  - [kokoPlay-proton]
  - kokoplay-proton-cleanup                           # Proton drive clean up and reset
- - kokoplay-proton-create-secret                     # Proton drive encrypted DB creation for credentials
+ - kokoplay-proton-create-secret                     # Proton drive encrypted DB creation for credentials [alias: pcs]
  - kokoplay-proton-help                              # Proton drive help
  - kokoplay-proton-mount                             # Proton drive mount
  - kokoplay-proton-mount-on-boot                     # Proton drive set mount on boot
+ - kokoplay-proton-mount-on-boot-disable             # Proton drive set mount on boot disable
  - kokoplay-proton-rclone-config                     # Proton drive remote configuration
+ - kokoplay-proton-rclone-config-delete              # Proton drive rclone config delete
  - kokoplay-proton-unmount                           # Proton drive unmount
+
 
 ## Installing the image
 
