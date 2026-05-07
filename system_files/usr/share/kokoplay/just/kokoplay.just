@@ -94,12 +94,19 @@ kokoplay-mount-dir:
 
 alias pcs := kokoplay-proton-create-secret
 
-# Install local NAS support parameters
+# Install and configure certilia (CRO) with Firefox in docker container
 [group('kokoPlay')]
-kokoplay-certilia-setup:
+kokoplay-certilia-firefox-setup:
     #!/usr/bin/env bash
     set -euo pipefail
     bash /usr/libexec/kokoplay/certilia-setup-firefox.sh
+
+# Install and configure certilia (CRO) with Brave browser in docker container
+[group('kokoPlay')]
+kokoplay-certilia-brave-setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash /usr/libexec/kokoplay/certilia-setup.sh
 
 # Proton drive encrypted DB creation for credentials
 [group('kokoPlay-proton')]

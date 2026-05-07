@@ -76,10 +76,9 @@ if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
     echo "🏗️ Building Docker image..."
 
     cat > /tmp/Dockerfile.certilia << 'EOF'
-FROM ubuntu:latest
+FROM debian:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
-FROM debian:latest
 
 #RUN apt update && apt upgrade -y
 
@@ -205,24 +204,19 @@ fi
 
 
 mkdir -p /run/pcscd
-pcscd --disable-polkit &
+pcscd --foreground --disable-polkit &
+#pcscd --disable-polkit &
 PCSC_PID=$!
 
-# Wait for socket to appear instead of blind sleep
-echo "⏳ Waiting for pcscd socket..."
-for i in {1..20}; do
-    if [ -S /run/pcscd/pcscd.comm ]; then
-        echo "✔ pcscd ready"
+echo "⏳ Waiting for reader..."
+
+for i in {1..30}; do
+    if pcsc_scan -n 2>/dev/null | grep -q "Reader"; then
+        echo "✔ Reader detected"
         break
     fi
-    sleep 0.3
+    sleep 1
 done
-
-# Optional: fail if not ready
-if [ ! -S /run/pcscd/pcscd.comm ]; then
-    echo "❌ pcscd failed to start"
-    exit 1
-fi
 
 
 
@@ -263,7 +257,8 @@ chown -R 1000:1000 /home/user/.pki
 
 echo "✅ Environment ready!"
 echo "👉 Insert eID and use Brave."
-echo "To run brave container from host CLI use:brave-certilia, for certilia client use: certiliaclient"
+echo "To run brave container from host CLI use:brave-certilia, for certilia client (card reader) use: certiliaclient"
+echo "Put card reader with id into usb. Start certilia client, then start Brave"
 exec sleep infinity
 
 EOF

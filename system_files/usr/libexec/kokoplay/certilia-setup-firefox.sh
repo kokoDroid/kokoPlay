@@ -83,10 +83,10 @@ if ! docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
     echo "🏗️ Building Docker image..."
 
     cat > /tmp/Dockerfile.certilia << 'EOF'
-FROM ubuntu:24.04
+FROM debian:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
-FROM debian:latest
+
 ARG UID
 ARG GID
 
@@ -149,7 +149,7 @@ RUN which certiliaclient || (echo "❌ certiliaclient missing!" && exit 1)
 #RUN useradd -m user && echo "user:user" | chpasswd && adduser user sudo
 
 
-RUN useradd user \
+RUN useradd -m user \
  && mkdir -p /home/user \
  && chown -R user:user /home/user
 
@@ -222,24 +222,21 @@ fi
 
 
 mkdir -p /run/pcscd
-pcscd --disable-polkit &
+#pcscd --disable-polkit &
+pcscd --foreground --disable-polkit &
+
 PCSC_PID=$!
 
-# Wait for socket to appear instead of blind sleep
-echo "⏳ Waiting for pcscd socket..."
-for i in {1..20}; do
-    if [ -S /run/pcscd/pcscd.comm ]; then
-        echo "✔ pcscd ready"
+echo "⏳ Waiting for reader..."
+
+for i in {1..30}; do
+    if pcsc_scan -n 2>/dev/null | grep -q "Reader"; then
+        echo "✔ Reader detected"
         break
     fi
-    sleep 0.3
+    sleep 1
 done
 
-# Optional: fail if not ready
-if [ ! -S /run/pcscd/pcscd.comm ]; then
-    echo "❌ pcscd failed to start"
-    exit 1
-fi
 
 PROFILE="/tmp/firefox-certilia"
 PKCS11="/usr/lib/akd/certiliamiddleware/pkcs11/libEidPkcs11.so"
@@ -254,10 +251,15 @@ fi
 # Add module only if not already present
 if ! modutil -dbdir sql:"$PROFILE" -list | grep -q "Certilia"; then
     echo "📌 Adding Certilia PKCS#11 module..."
+    sleep 5
+    pkill -x firefox 2>/dev/null || true
     printf '\n' | modutil \
         -dbdir sql:"$PROFILE" \
         -add "Certilia" \
         -libfile "$PKCS11"
+
+    chown -R 1000:1000 /tmp/firefox-certilia
+   
 else
     echo "✔ Certilia module already registered"
 fi
@@ -267,7 +269,7 @@ fi
 
 echo "✅ Environment ready!"
 echo "👉 Insert eID and use Brave."
-echo "To run firefox container from host CLI use:firefox-certilia, for certilia client use: certiliaclient"
+echo "To run firefox container from host CLI use:firefox-certilia, for certilia client (card reader) use: certiliaclient"
 echo "Put card reader with id into usb. Start certilia client, then start firefox"
 exec sleep infinity
 
