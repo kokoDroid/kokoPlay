@@ -95,14 +95,14 @@ kokoplay-mount-dir:
 alias pcs := kokoplay-proton-create-secret
 
 # Install and configure certilia (CRO) with Firefox in docker container
-[group('kokoPlay')]
+[group('kokoPlay-Certilia')]
 kokoplay-certilia-firefox-setup:
     #!/usr/bin/env bash
     set -euo pipefail
     bash /usr/libexec/kokoplay/certilia-setup-firefox.sh
 
 # Install and configure certilia (CRO) with Brave browser in docker container
-[group('kokoPlay')]
+[group('kokoPlay-Certilia')]
 kokoplay-certilia-brave-setup:
     #!/usr/bin/env bash
     set -euo pipefail
