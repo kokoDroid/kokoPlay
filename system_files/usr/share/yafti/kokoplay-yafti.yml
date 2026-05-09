@@ -1,0 +1,83 @@
+title: KokoPlay Portal
+screens:        
+  - title: "KokoPlay tweaks"
+    description: "KokoPlay Ujust GUI"
+    actions:
+      - id: "kokoplay-install-nas"
+        title: "Install local NAS"
+        description: "Install local NAS and mount specified directory during boot"
+        default: false
+        script: "ujust kokoplay-install-nas "
+      - id: "kokoplay-mount-dir"
+        title: "Mount extra NAS Directory"
+        description: "Mounts additional NAS directory"
+        default: false
+        script: "ujust kokoplay-mount-dir"
+      - id: "kokoplay-mount-cifs-sudo"
+        title: "Config CIFS mounting without Sudo"
+        description: "Make NAS mountable without root password during boot"
+        default: false
+        script: "ujust kokoplay-mount-cifs-sudo"
+      - id: "kokoplay-certilia"
+        title: "Certlia"
+        description: "Install Certilia middleware (CRO) in docker and specified browser and configures environment"
+        default: false
+        options:
+          - id: "kokoplay-certilia-brave-setup"
+            label: "Use with Brave"
+            script: "ujust kokoplay-certilia-brave-setup"
+          - id: "kokoplay-certilia-firefox-setup"
+            label: "Use with Firefox"
+            script: "ujust kokoplay-certilia-firefox-setup"
+      
+  - title: "Proton Drive"
+    description: "Proton drive mounting and configuration"
+    actions:
+      - id: "kokoplay-proton-help"
+        title: "Display Help"
+        description: "Start with this if you are new to Proton Drive mounting"
+        default: true
+        script: "ujust kokoplay-proton-help"
+      - id: "kokoplay-proton-create-secret"
+        title: "Create encrypted secrets"
+        description: "Create encrypted DB used to store credentials and other secrets for Proton Drive mounting"
+        default: false
+        script: "ujust kokoplay-proton-create-secret"
+      - id: "kokoplay-proton-mount"
+        title: "Mount/Unmount Proton Drive"
+        description: "Mounts or unmounts Proton Drive"
+        default: false
+        options:
+          - id: "mount"
+            label: "Mount"
+            script: "ujust kokoplay-proton-mount"
+          - id: "unmount"
+            label: "Unmount"
+            script: "ujust kokoplay-proton-unmount"
+      - id: "kokoplay-proton-boot"
+        title: "Mount/Unmount on boot"
+        description: "Configures Proton Drive mounting during boot"
+        default: false
+        options:
+          - id: "mount-on-boot"
+            label: "Mount"
+            script: "ujust kokoplay-proton-mount-on-boot"
+          - id: "unmount-on-boot"
+            label: "Unmount"
+            script: "ujust kokoplay-proton-mount-on-boot-disable"    
+      - id: "kokoplay-proton-rclone"
+        title: "Configure Rclone"
+        description: "Configures or deletes Rclone for Proton Drive access"
+        default: false
+        options:
+          - id: "rclone-config"
+            label: "Configure Rclone"
+            script: "ujust kokoplay-proton-rclone-config"
+          - id: "rclone-unconfig"
+            label: "Delete Rclone Config"
+            script: "ujust kokoplay-proton-rclone-config-delete"          
+      - id: "kokoplay-proton-cleanup"
+        title: "All-in-One Proton Drive Cleanup"
+        description: "Deletes all configs, secrets, and mounts related to Proton Drive mounting. Use this to start fresh"
+        default: false
+        script: "ujust kokoplay-proton-cleanup"
