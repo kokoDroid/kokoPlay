@@ -4,6 +4,6 @@ Name=Kokoplay configure
 Comment=Custom utility
 Exec=/usr/libexec/kokoplay/kokoplay_yafti_gtk.py /usr/share/yafti/kokoplay-yafti.yml
 Icon=/usr/share/icons/hicolor/scalable/apps/kokoplay-menu.svg
-Terminal=true
+Terminal=false
 Categories=Utility;
 StartupNotify=true

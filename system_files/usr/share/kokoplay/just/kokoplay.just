@@ -183,6 +183,8 @@ kokoplay-proton-help:
     echo
     echo "cleanup        : Warning: Purges all proton related configuration data including credentials"
     echo
+    read -n 1 -s -r -p "Press any key to exit..."
+    echo
 
 # Proton drive clean up and reset
 [group('kokoPlay-proton')]
@@ -204,3 +206,4 @@ kokoplay-proton-rclone-config-delete:
         rm -f "$RCLONE_CONFIG"
         echo "    Removed $RCLONE_CONFIG"
     fi
+    read -n 1 -s -r -p "Press any key to exit..."
