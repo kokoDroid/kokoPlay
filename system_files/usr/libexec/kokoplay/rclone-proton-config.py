@@ -72,7 +72,7 @@ def create_remote(dbpass):
         child.sendline(REMOTE)
 
         child.expect("Storage>")
-        child.sendline("48")
+        child.sendline("49")
 
         child.expect("username")
         child.sendline(USER)
