@@ -108,6 +108,13 @@ kokoplay-certilia-brave-setup:
     set -euo pipefail
     bash /usr/libexec/kokoplay/certilia-setup.sh
 
+# Remove certilia docker container and delete image
+[group('kokoPlay-Certilia')]
+kokoplay-certilia-remove:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash /usr/libexec/kokoplay/certilia-remove.sh    
+
 # Proton drive encrypted DB creation for credentials
 [group('kokoPlay-proton')]
 kokoplay-proton-create-secret:

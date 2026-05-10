@@ -60,6 +60,11 @@ sudo tee /usr/local/bin/certiliaclient > /dev/null << EOF
 
 CONTAINER_NAME="${CONTAINER_NAME}"
 
+xhost +local:docker >/dev/null 2>&1
+
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
 # Ensure container is running
 docker start "\$CONTAINER_NAME" >/dev/null 2>&1 || true
 
@@ -208,7 +213,7 @@ pcscd --foreground --disable-polkit &
 #pcscd --disable-polkit &
 PCSC_PID=$!
 
-echo "⏳ Waiting for reader..."
+echo "⏳ Waiting for reader...please insert eID card into reader and reader into usb if not already done"
 
 for i in {1..30}; do
     if pcsc_scan -n 2>/dev/null | grep -q "Reader"; then

@@ -20,7 +20,7 @@ screens:
         script: "ujust kokoplay-mount-cifs-sudo"
       - id: "kokoplay-certilia"
         title: "Certlia"
-        description: "Install Certilia middleware (CRO) in docker and specified browser and configures environment"
+        description: "Install/Remove Certilia middleware (CRO) and specified browser in docker and configure environment"
         default: false
         options:
           - id: "kokoplay-certilia-brave-setup"
@@ -29,6 +29,9 @@ screens:
           - id: "kokoplay-certilia-firefox-setup"
             label: "Use with Firefox"
             script: "ujust kokoplay-certilia-firefox-setup"
+          - id: "kokoplay-certilia-remove"
+            label: "Remove Certilia container and image"
+            script: "ujust kokoplay-certilia-remove"  
       
   - title: "Proton Drive"
     description: "Proton drive mounting and configuration"
