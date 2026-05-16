@@ -3,9 +3,12 @@
 Yafti GTK - A simple GTK GUI for running scripts from yafti.yml
 """
 
+import json
+import os
 import subprocess
 import sys
 import threading
+from pathlib import Path
 
 import gi
 import yaml
@@ -20,6 +23,10 @@ DEFAULT_WINDOW_WIDTH = 800
 DEFAULT_WINDOW_HEIGHT = 600
 STATUS_TIMEOUT_SECONDS = 3
 ACTION_DIALOG_WIDTH = 420
+AUTOSTART_DESKTOP_FILENAME = f"{APP_ID}.desktop"
+AUTOSTART_DIR = Path.home() / '.config' / 'autostart'
+AUTOSTART_STATE_DIR = Path.home() / '.config' / 'yafti-gtk'
+AUTOSTART_STATE_FILE = AUTOSTART_STATE_DIR / 'autostart_state.json'
 
 
 def set_widget_margins(widget, top=10, bottom=10, start=10, end=10):
@@ -98,6 +105,7 @@ class YaftiGTK(Gtk.Window):
         self.active_dialog_state = None
 
         # Load YAML configuration
+        self.config_file = config_file
         self.config = self.load_config(config_file)
         self.screens = self.config.get('screens', [])
         self.actions_index = self._build_actions_index()
@@ -112,6 +120,9 @@ class YaftiGTK(Gtk.Window):
         set_widget_margins(search_entry, 10, 10, 10, 10)
         search_entry.connect("search-changed", self.on_search_changed)
         vbox.append(search_entry)
+
+        self.autostart_checkbox = self.build_autostart_checkbox()
+        vbox.append(self.autostart_checkbox)
 
         # Notebook (tabs) directly below search
         self.notebook = Gtk.Notebook()
@@ -228,6 +239,123 @@ class YaftiGTK(Gtk.Window):
             return options
 
         return []
+
+    def build_autostart_checkbox(self):
+        """Build the autostart checkbox UI and initialize its state."""
+        checkbox = Gtk.CheckButton(label="Start KokoPlay Configuration at login")
+        enabled = self.is_autostart_enabled()
+        checkbox.set_active(enabled)
+
+        if enabled and not self.get_autostart_desktop_path().exists():
+            try:
+                self.enable_autostart()
+            except RuntimeError:
+                pass
+
+        checkbox.connect("toggled", self.on_autostart_toggled)
+        set_widget_margins(checkbox, top=0, bottom=10, start=10, end=10)
+        return checkbox
+
+    def get_autostart_desktop_path(self):
+        """Return the autostart desktop file path."""
+        return AUTOSTART_DIR / AUTOSTART_DESKTOP_FILENAME
+
+    def get_autostart_exec(self):
+        """Return the Exec command used by the autostart desktop file."""
+        script_path = os.path.abspath(__file__)
+        return f"{sys.executable} {script_path} {self.config_file}"
+
+    def get_autostart_desktop_content(self):
+        """Return the desktop entry content for autostart."""
+        return """[Desktop Entry]
+Type=Application
+Name=KokoPlay Configuration
+Exec=%s
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+""" % self.get_autostart_exec()
+
+    def load_autostart_state(self):
+        """Read the user's explicit autostart preference state."""
+        if not AUTOSTART_STATE_FILE.exists():
+            return {}
+
+        try:
+            with AUTOSTART_STATE_FILE.open('r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def save_autostart_state(self, state):
+        """Persist the user's autostart preference state."""
+        try:
+            AUTOSTART_STATE_DIR.mkdir(parents=True, exist_ok=True)
+            with AUTOSTART_STATE_FILE.open('w', encoding='utf-8') as f:
+                json.dump(state, f)
+        except Exception as e:
+            raise RuntimeError(f"Could not save autostart preferences: {e}")
+
+    def remove_autostart_state(self):
+        """Delete the persisted autostart preference state."""
+        try:
+            if AUTOSTART_STATE_FILE.exists():
+                AUTOSTART_STATE_FILE.unlink()
+        except Exception as e:
+            raise RuntimeError(f"Could not remove autostart preferences: {e}")
+
+    def user_cleared_autostart(self):
+        """Return True if the user explicitly disabled autostart."""
+        state = self.load_autostart_state()
+        return bool(state.get('user_disabled', False))
+
+    def is_autostart_enabled(self):
+        """Return True when autostart should be enabled by default or via existing desktop file."""
+        desktop_path = self.get_autostart_desktop_path()
+        if desktop_path.exists():
+            try:
+                with desktop_path.open('r', encoding='utf-8') as f:
+                    for line in f:
+                        if line.startswith('Exec='):
+                            return self.get_autostart_exec() in line
+            except Exception:
+                pass
+
+        if self.user_cleared_autostart():
+            return False
+
+        return True
+
+    def enable_autostart(self):
+        """Write the autostart desktop file."""
+        try:
+            AUTOSTART_DIR.mkdir(parents=True, exist_ok=True)
+            desktop_path = self.get_autostart_desktop_path()
+            with desktop_path.open('w', encoding='utf-8') as f:
+                f.write(self.get_autostart_desktop_content())
+            self.remove_autostart_state()
+        except Exception as e:
+            raise RuntimeError(f"Could not enable autostart: {e}")
+
+    def disable_autostart(self):
+        """Remove the autostart desktop file."""
+        desktop_path = self.get_autostart_desktop_path()
+        try:
+            if desktop_path.exists():
+                desktop_path.unlink()
+            self.save_autostart_state({'user_disabled': True})
+        except Exception as e:
+            raise RuntimeError(f"Could not disable autostart: {e}")
+
+    def on_autostart_toggled(self, checkbox):
+        """Handle autostart checkbox toggling."""
+        try:
+            if checkbox.get_active():
+                self.enable_autostart()
+            else:
+                self.disable_autostart()
+        except RuntimeError as e:
+            show_error_dialog(self, "Autostart error", str(e))
+            checkbox.set_active(not checkbox.get_active())
 
     def action_uses_modal(self, action):
         """Return True when the action should open the management modal."""
