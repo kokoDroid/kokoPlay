@@ -94,6 +94,26 @@ kokoplay-mount-dir:
 
 alias pcs := kokoplay-proton-create-secret
 
+# Do not randomize wifi mac
+[group('kokoPlay')]
+kokoplay-randomize-mac-never:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    read -p "Enter networkname: " NETWORK
+
+    nmcli connection modify "$NETWORK" 802-11-wireless.mac-address-randomization never
+
+# Randomize wifi mac
+[group('kokoPlay')]
+kokoplay-randomize-mac-always:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    read -p "Enter networkname: " NETWORK
+
+    nmcli connection modify "$NETWORK" 802-11-wireless.mac-address-randomization always
+
 # Install and configure certilia (CRO) with Firefox in docker container
 [group('kokoPlay-Certilia')]
 kokoplay-certilia-firefox-setup:

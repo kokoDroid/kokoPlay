@@ -32,6 +32,17 @@ screens:
           - id: "kokoplay-certilia-remove"
             label: "Remove Certilia container and image"
             script: "ujust kokoplay-certilia-remove"  
+      - id: "kokoplay-randomize-mac"
+        title: "MAC Address Randomization"
+        description: "Control (always/never) the MAC address randomization of the specified network interface"
+        default: false
+        options:
+          - id: "kokoplay-randomize-mac-never"
+            label: "Never Randomize"
+            script: "ujust kokoplay-randomize-mac-never"
+          - id: "kokoplay-randomize-mac-always"
+            label: "Always Randomize"
+            script: "ujust kokoplay-randomize-mac-always"
       
   - title: "Proton Drive"
     description: "Proton drive mounting and configuration"
