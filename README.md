@@ -50,6 +50,8 @@ Proton drive support added (alpha).
 Now you can mount proton disk manually or automatically during boot.
 Plan is to add support for sync and backup features, so it is work in progress.
 Read me file will be updated during progress.
+(Update: Proton started to use captcha which rclone does not support.
+Proton Drive may not be usable anymore.)
 
 Just recipes:
 
