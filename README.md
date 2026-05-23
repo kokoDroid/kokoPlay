@@ -59,10 +59,13 @@ Just recipes:
  - kokoplay-install-nas                              # Install local NAS support parameters
  - kokoplay-mount-cifs-sudo                          # Make NAS mountable without root password during boot
  - kokoplay-mount-dir                                # Mount additional directory to installed local NAS [alias: kpmd]
+ - kokoplay-randomize-mac-always                     # Randomize wifi mac
+ - kokoplay-randomize-mac-never                      # Do not randomize wifi mac
 
  - [kokoPlay-Certilia]
  - kokoplay-certilia-brave-setup                     # Install and configure certilia (CRO) with Brave browser in docker container
  - kokoplay-certilia-firefox-setup                   # Install and configure certilia (CRO) with Firefox in docker container
+ - kokoplay-certilia-remove                          # Remove certilia docker container and delete image
 
  - [kokoPlay-proton]
  - kokoplay-proton-cleanup                           # Proton drive clean up and reset
@@ -74,6 +77,8 @@ Just recipes:
  - kokoplay-proton-rclone-config                     # Proton drive remote configuration
  - kokoplay-proton-rclone-config-delete              # Proton drive rclone config delete
  - kokoplay-proton-unmount                           # Proton drive unmount
+
+ There is kokoplay config GUI app in Menu for ujust commands above.
 
 
 ## Installing the image
