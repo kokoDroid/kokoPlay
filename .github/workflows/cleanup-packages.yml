@@ -1,17 +1,20 @@
 name: Cleanup Packages
 on:
   schedule:
-    - cron: '0 12 * * 1'  # Runs daily at 8 AM
+    - cron: '0 12 * * 1'  # Runs every Monday at 12:00      
   workflow_dispatch:
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package-name: [kokoplay, kokoplay-dev, kokoplay-nvidia, kokoplay-nvidia-open]
     steps:
       - name: Delete old package versions
         uses: actions/delete-package-versions@v5
         with:
-          package-name: 'kokoplay'
+          package-name: ${{ matrix.package-name }}
           package-type: 'container'
           delete-only-untagged-versions: 'false'
           min-versions-to-keep: 40
