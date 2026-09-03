@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+set -euo pipefail
 
 # Create /var/nix for the bind mount source
 mkdir -p /var/nix && chmod 0755 /var/nix
