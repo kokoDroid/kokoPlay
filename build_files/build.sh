@@ -44,8 +44,6 @@ dnf5 install -y icu
 
 dnf5 install -y glibc-langpack-en
 
-dnf5 install -y libxcb-cursor
-
 
 #dnf5 install -y /rpms/*.rpm
 echo "Installing local RPMs..."
