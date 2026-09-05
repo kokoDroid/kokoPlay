@@ -88,7 +88,7 @@ jobs:
       - name: Generate Containerfile for matrix job
         run: |
           if [ "${{ matrix.gpu }}" = "amd" ]; then
-            base_image="ghcr.io/ublue-os/bazzite:44.20260802"
+            base_image="ghcr.io/ublue-os/bazzite:stable"
           elif [ "${{ matrix.gpu }}" = "nvidia" ]; then
             base_image="ghcr.io/ublue-os/bazzite-nvidia:stable"
           else
