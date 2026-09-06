@@ -230,7 +230,6 @@ cat > /etc/systemd/system/kokoplay-nix-init.service <<'NIXSERVICE'
 Description=KokoPlay Nix first-boot initialization
 Requires=nix.mount
 After=nix.mount
-Before=nix-daemon.socket
 
 ConditionPathExists=!/var/nix/.kokoplay-nix-initialized
 
