@@ -139,8 +139,8 @@ chmod 0644 /etc/profile.d/nix-remote.sh
 # The service is skipped automatically after successful
 # initialization.
 # ------------------------------------------------------------
-mkdir -p /usr/local/bin
-cat > /usr/local/bin/kokoplay-nix-init <<'NIXINIT'
+mkdir -p /usr/bin
+cat > /usr/bin/kokoplay-nix-init <<'NIXINIT'
 #!/usr/bin/bash
 set -euo pipefail
 
@@ -213,13 +213,13 @@ touch /var/nix/.kokoplay-nix-initialized
 echo "KokoPlay multi-user Nix initialization completed."
 NIXINIT
 
-chmod 0755 /usr/local/bin/kokoplay-nix-init
+chmod 0755 /usr/bin/kokoplay-nix-init
 
 # ------------------------------------------------------------
 # Verify helper script was actually created.
 # ------------------------------------------------------------
 
-test -x /usr/local/bin/kokoplay-nix-init
+test -x /usr/bin/kokoplay-nix-init
 
 # ------------------------------------------------------------
 # First-boot systemd service.
@@ -236,7 +236,7 @@ ConditionPathExists=!/var/nix/.kokoplay-nix-initialized
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/kokoplay-nix-init
+ExecStart=/usr/bin/kokoplay-nix-init
 RemainAfterExit=yes
 
 [Install]
