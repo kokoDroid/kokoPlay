@@ -43,6 +43,7 @@ There are some other apps included by default such as:
     -opensnitch
 
 Lutris is removed in flavor of faugus launcher.
+Multiuser Nix package manager is preinstalled. 
 
 It also adds just files to install selected flatpaks and brews.
 It adds support to map directories from Local NAS and mount them during boot. 
