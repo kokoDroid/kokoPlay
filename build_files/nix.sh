@@ -10,6 +10,9 @@ set -euo pipefail
 #
 # Nix itself is managed by Fedora's nix-daemon/nix-system
 # packages. This is a MULTI-USER installation.
+#
+# Nix store/database initialization is performed on first boot,
+# not during the image build.
 # ------------------------------------------------------------
 
 # Fedora multi-user Nix
@@ -51,46 +54,15 @@ fi
 # IMPORTANT:
 # Do not chown it to a normal user.
 # Nix uses root ownership in multi-user mode.
+#
+# The actual Nix store/database is initialized on first boot
+# because /var is persistent only on the installed system.
 # ------------------------------------------------------------
 
 mkdir -p /var/nix
 chmod 0755 /var/nix
 
 mkdir -p /nix
-
-# ------------------------------------------------------------
-# Create the persistent Nix directory structure.
-#
-# /nix is a bind mount of /var/nix at runtime, so initialize
-# the actual persistent directories under /var/nix.
-# ------------------------------------------------------------
-
-mkdir -p \
-    /var/nix/store \
-    /var/nix/var/nix \
-    /var/nix/var/nix/daemon-socket \
-    /var/nix/var/nix/builds \
-    /var/nix/var/log/nix
-
-chmod 0755 \
-    /var/nix/store \
-    /var/nix/var/nix \
-    /var/nix/var/nix/daemon-socket \
-    /var/nix/var/nix/builds \
-    /var/nix/var/log/nix
-
-# ------------------------------------------------------------
-# Initialize the Nix store/database in the persistent location.
-#
-# Do not initialize /nix separately because /nix is the runtime
-# bind mount of /var/nix.
-# ------------------------------------------------------------
-
-if [[ ! -f /var/nix/var/nix/db/db.sqlite ]]; then
-    NIX_STORE_DIR=/var/nix/store \
-    NIX_STATE_DIR=/var/nix/var/nix \
-    nix-store --init
-fi
 
 # ------------------------------------------------------------
 # Bind persistent /var/nix to /nix
@@ -138,8 +110,6 @@ semanage fcontext -a -t var_run_t \
 semanage fcontext -m -t var_run_t \
     '/var/nix/var/nix/daemon-socket(/.*)?'
 
-restorecon -RF /var/nix/var/nix/daemon-socket
-
 # ------------------------------------------------------------
 # Make unprivileged Nix clients use the system daemon.
 # ------------------------------------------------------------
@@ -152,22 +122,127 @@ EOF
 chmod 0644 /etc/profile.d/nix-remote.sh
 
 # ------------------------------------------------------------
-# Fedora's multi-user Nix daemon.
+# First-boot Nix initialization.
 #
-# nix-daemon is socket activated, so enable the socket rather
-# than the service itself.
+# The image build cannot reliably initialize the persistent
+# /var/nix because the installed system's persistent /var is
+# available only after boot.
+#
+# This service:
+#
+#   1. waits for nix.mount
+#   2. creates the Nix directory structure
+#   3. initializes the Nix store/database
+#   4. applies SELinux labels
+#   5. enables the Nix daemon socket
+#
+# The service is disabled after successful initialization.
+# ------------------------------------------------------------
+
+cat > /usr/local/sbin/kokoplay-nix-init <<'EOF'
+#!/usr/bin/bash
+set -euo pipefail
+
+# ------------------------------------------------------------
+# KokoPlay Nix first-boot initialization
+# ------------------------------------------------------------
+
+# The mount must already be active.
+if ! mountpoint -q /nix; then
+    systemctl start nix.mount
+fi
+
+# ------------------------------------------------------------
+# Create the persistent Nix directory structure.
+# ------------------------------------------------------------
+
+mkdir -p \
+    /nix/store \
+    /nix/var/nix \
+    /nix/var/nix/daemon-socket \
+    /nix/var/nix/builds \
+    /nix/var/log/nix
+
+chmod 0755 \
+    /nix/store \
+    /nix/var/nix \
+    /nix/var/nix/daemon-socket \
+    /nix/var/nix/builds \
+    /nix/var/log/nix
+
+# ------------------------------------------------------------
+# Initialize the Nix store/database.
+# ------------------------------------------------------------
+
+if [[ ! -f /nix/var/nix/db/db.sqlite ]]; then
+    nix-store --init
+fi
+
+# ------------------------------------------------------------
+# Apply SELinux labels.
+# ------------------------------------------------------------
+
+restorecon -RF /nix
+
+# The daemon socket must use var_run_t.
+restorecon -RF /nix/var/nix/daemon-socket
+
+# ------------------------------------------------------------
+# Enable and start the multi-user Nix daemon socket.
 # ------------------------------------------------------------
 
 systemctl enable nix-daemon.socket
+systemctl start nix-daemon.socket
 
 # ------------------------------------------------------------
-# Apply SELinux labels to the persistent Nix tree.
+# Verify that the daemon socket exists.
 # ------------------------------------------------------------
 
-restorecon -RF /var/nix
+if [[ ! -S /nix/var/nix/daemon-socket/socket ]]; then
+    echo "ERROR: Nix daemon socket was not created."
+    exit 1
+fi
 
-# The daemon socket must use var_run_t.
-restorecon -RF /var/nix/var/nix/daemon-socket
+# ------------------------------------------------------------
+# Initialization complete.
+# ------------------------------------------------------------
+
+touch /var/nix/.kokoplay-nix-initialized
+
+systemctl disable kokoplay-nix-init.service
+
+echo "KokoPlay multi-user Nix initialization completed."
+EOF
+
+chmod 0755 /usr/local/sbin/kokoplay-nix-init
+
+# ------------------------------------------------------------
+# First-boot systemd service.
+# ------------------------------------------------------------
+
+cat > /etc/systemd/system/kokoplay-nix-init.service <<'EOF'
+[Unit]
+Description=KokoPlay Nix first-boot initialization
+Requires=nix.mount
+After=nix.mount
+Before=nix-daemon.socket
+
+ConditionPathExists=!/var/nix/.kokoplay-nix-initialized
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/kokoplay-nix-init
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# ------------------------------------------------------------
+# Enable first-boot initialization.
+# ------------------------------------------------------------
+
+systemctl enable kokoplay-nix-init.service
 
 # ------------------------------------------------------------
 # End
