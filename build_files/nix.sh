@@ -34,18 +34,18 @@ fi
 mkdir -p /etc/nix
 
 if [[ ! -f /etc/nix/nix.conf ]]; then
-    cat > /etc/nix/nix.conf <<'EOF'
+    cat > /etc/nix/nix.conf <<'NIXCONF'
 experimental-features = nix-command flakes
-EOF
+NIXCONF
 elif ! grep -Eq \
     '^[[:space:]]*experimental-features[[:space:]]*=.*nix-command.*flakes|^[[:space:]]*experimental-features[[:space:]]*=.*flakes.*nix-command' \
     /etc/nix/nix.conf
 then
-    cat >> /etc/nix/nix.conf <<'EOF'
+    cat >> /etc/nix/nix.conf <<'NIXCONF'
 
 # KokoPlay: enable nix-command and flakes
 experimental-features = nix-command flakes
-EOF
+NIXCONF
 fi
 
 # ------------------------------------------------------------
@@ -68,7 +68,7 @@ mkdir -p /nix
 # Bind persistent /var/nix to /nix
 # ------------------------------------------------------------
 
-cat > /etc/systemd/system/nix.mount <<'EOF'
+cat > /etc/systemd/system/nix.mount <<'NIXMOUNT'
 [Unit]
 Description=Persistent Nix store
 Before=local-fs.target
@@ -82,7 +82,7 @@ Options=bind
 
 [Install]
 WantedBy=local-fs.target
-EOF
+NIXMOUNT
 
 systemctl enable nix.mount
 
@@ -114,10 +114,10 @@ semanage fcontext -m -t var_run_t \
 # Make unprivileged Nix clients use the system daemon.
 # ------------------------------------------------------------
 
-cat > /etc/profile.d/nix-remote.sh <<'EOF'
+cat > /etc/profile.d/nix-remote.sh <<'NIXREMOTE'
 # KokoPlay: use the system Nix daemon for multi-user operation.
 export NIX_REMOTE=daemon
-EOF
+NIXREMOTE
 
 chmod 0644 /etc/profile.d/nix-remote.sh
 
@@ -136,10 +136,11 @@ chmod 0644 /etc/profile.d/nix-remote.sh
 #   4. applies SELinux labels
 #   5. enables the Nix daemon socket
 #
-# The service is disabled after successful initialization.
+# The service is skipped automatically after successful
+# initialization.
 # ------------------------------------------------------------
 
-cat > /usr/local/sbin/kokoplay-nix-init <<'EOF'
+cat > /usr/local/sbin/kokoplay-nix-init <<'NIXINIT'
 #!/usr/bin/bash
 set -euo pipefail
 
@@ -209,18 +210,22 @@ fi
 
 touch /var/nix/.kokoplay-nix-initialized
 
-systemctl disable kokoplay-nix-init.service
-
 echo "KokoPlay multi-user Nix initialization completed."
-EOF
+NIXINIT
 
 chmod 0755 /usr/local/sbin/kokoplay-nix-init
+
+# ------------------------------------------------------------
+# Verify helper script was actually created.
+# ------------------------------------------------------------
+
+test -x /usr/local/sbin/kokoplay-nix-init
 
 # ------------------------------------------------------------
 # First-boot systemd service.
 # ------------------------------------------------------------
 
-cat > /etc/systemd/system/kokoplay-nix-init.service <<'EOF'
+cat > /etc/systemd/system/kokoplay-nix-init.service <<'NIXSERVICE'
 [Unit]
 Description=KokoPlay Nix first-boot initialization
 Requires=nix.mount
@@ -236,7 +241,13 @@ RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
-EOF
+NIXSERVICE
+
+# ------------------------------------------------------------
+# Verify service was actually created.
+# ------------------------------------------------------------
+
+test -f /etc/systemd/system/kokoplay-nix-init.service
 
 # ------------------------------------------------------------
 # Enable first-boot initialization.
