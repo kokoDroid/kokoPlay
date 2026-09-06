@@ -139,7 +139,7 @@ chmod 0644 /etc/profile.d/nix-remote.sh
 # The service is skipped automatically after successful
 # initialization.
 # ------------------------------------------------------------
-
+mkdir -p /usr/local/sbin
 cat > /usr/local/sbin/kokoplay-nix-init <<'NIXINIT'
 #!/usr/bin/bash
 set -euo pipefail
