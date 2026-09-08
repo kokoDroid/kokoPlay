@@ -53,7 +53,7 @@ echo "Installing all RPMs except MegaSync..."
 dnf5 install -y $(find /rpms -maxdepth 1 -type f -name '*.rpm' ! -name 'megasync-*.rpm')
 
 # 2️⃣ Install MegaSync separately with --noscripts
-MEGASYNC_RPM=$(find /rpms -maxdepth 1 -type f -name 'megasync-*.rpm')
+#MEGASYNC_RPM=$(find /rpms -maxdepth 1 -type f -name 'megasync-*.rpm')
 
 if [[ -f "$MEGASYNC_RPM" ]]; then
     echo "Installing MegaSync RPM without running post-install scripts..."
