@@ -289,7 +289,6 @@ chmod 0755 /usr/bin/kokoplay-install-nixgl
 cat > /etc/systemd/user/kokoplay-nixgl.service <<'NIXGLSERVICE'
 [Unit]
 Description=KokoPlay install nixGL for user
-After=default.target
 
 [Service]
 Type=oneshot
@@ -303,7 +302,13 @@ NIXGLSERVICE
 
 test -f /etc/systemd/user/kokoplay-nixgl.service
 
-systemctl --user enable kokoplay-nixgl.service
+# Enable the user service globally for every user.
+mkdir -p /etc/systemd/user/default.target.wants
+
+ln -sf \
+    /etc/systemd/user/kokoplay-nixgl.service \
+    /etc/systemd/user/default.target.wants/kokoplay-nixgl.service
+
 # ------------------------------------------------------------
 # End
 # ------------------------------------------------------------
