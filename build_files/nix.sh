@@ -254,6 +254,56 @@ test -f /etc/systemd/system/kokoplay-nix-init.service
 
 systemctl enable kokoplay-nix-init.service
 
+cat > /usr/bin/kokoplay-install-nixgl <<'NIXGLINSTALL'
+#!/usr/bin/bash
+set -euo pipefail
+
+# Wait for the Nix daemon to become usable.
+for _ in {1..60}; do
+    if nix store ping >/dev/null 2>&1; then
+        break
+    fi
+    sleep 2
+done
+
+# If Nix still isn't available, fail and let systemd retry.
+if ! nix store ping >/dev/null 2>&1; then
+    echo "Nix daemon is not available yet."
+    exit 1
+fi
+
+# Already installed?
+if command -v nixGL >/dev/null 2>&1; then
+    exit 0
+fi
+
+echo "Installing nixGL for user ${USER}..."
+
+nix profile add --impure github:nix-community/nixGL
+
+echo "nixGL installation complete."
+NIXGLINSTALL
+
+chmod 0755 /usr/bin/kokoplay-install-nixgl
+
+cat > /etc/systemd/user/kokoplay-nixgl.service <<'NIXGLSERVICE'
+[Unit]
+Description=KokoPlay install nixGL for user
+After=default.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/kokoplay-install-nixgl
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
+NIXGLSERVICE
+
+test -f /etc/systemd/user/kokoplay-nixgl.service
+
+systemctl --user enable kokoplay-nixgl.service
 # ------------------------------------------------------------
 # End
 # ------------------------------------------------------------
