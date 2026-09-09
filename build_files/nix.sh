@@ -309,12 +309,12 @@ ln -sf \
     /etc/systemd/user/kokoplay-nixgl.service \
     /etc/systemd/user/default.target.wants/kokoplay-nixgl.service
 
-mkdir -p /usr/local/bin
 
-install -Dm755 /dev/stdin /usr/local/bin/nixGL <<'EOF'
+install -m755 /dev/stdin /usr/bin/nixGL <<'EOF'
 #!/usr/bin/bash
 exec "$HOME/.nix-profile/bin/nixGL" "$@"
 EOF
+
 
 # ------------------------------------------------------------
 # End
