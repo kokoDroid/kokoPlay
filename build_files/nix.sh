@@ -315,7 +315,38 @@ install -m755 /dev/stdin /usr/bin/nixGL <<'EOF'
 exec "$HOME/.nix-profile/bin/nixGL" "$@"
 EOF
 
+# ------------------------------------------------------------
+# MEGAsync user service
+#
+# Starts MEGAsync automatically for users who have installed
+# megasync into their Nix profile.
+# ------------------------------------------------------------
 
+cat > /etc/systemd/user/megasync.service <<'MEGASYNCSERVICE'
+[Unit]
+Description=MEGAsync
+After=graphical-session.target kokoplay-nixgl.service
+PartOf=graphical-session.target
+ConditionPathExists=%h/.nix-profile/bin/megasync
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/nixGL megasync
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+MEGASYNCSERVICE
+
+test -f /etc/systemd/user/megasync.service
+
+# Enable for every user.
+mkdir -p /etc/systemd/user/default.target.wants
+
+ln -sf \
+    /etc/systemd/user/megasync.service \
+    /etc/systemd/user/default.target.wants/megasync.service
 # ------------------------------------------------------------
 # End
 # ------------------------------------------------------------
