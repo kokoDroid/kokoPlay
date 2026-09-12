@@ -272,8 +272,8 @@ if ! nix store ping >/dev/null 2>&1; then
     exit 1
 fi
 
-# Already installed?
-if command -v nixGL >/dev/null 2>&1; then
+# Already installed for this user?
+if [[ -x "$HOME/.nix-profile/bin/nixGL" ]]; then
     exit 0
 fi
 
