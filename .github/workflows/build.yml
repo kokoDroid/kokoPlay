@@ -61,7 +61,7 @@ jobs:
     strategy:
       matrix:
         gpu: ${{ 
-          github.event_name == 'push' && fromJson('["amd"]') ||
+          (github.event_name == 'push' || github.event_name == 'schedule')  && fromJson('["amd"]') ||
           (github.event.inputs.build_variants == 'all' && fromJson('["amd","nvidia","nvidia-open"]')) ||
           fromJson(format('["{0}"]', github.event.inputs.build_variants))}}
     steps:
