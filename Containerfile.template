@@ -1,6 +1,7 @@
 FROM scratch AS ctx
 COPY build_files /
 COPY rpms /rpms
+COPY disk_config /disk_config
 
 FROM @BASE_IMAGE@
 
