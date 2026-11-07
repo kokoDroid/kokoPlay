@@ -42,4 +42,9 @@ dnf5 install -y "${UI_URL}" python3-grpcio python3-protobuf python3-slugify pyth
 
 # installs the daemon using rpm directly to skip the %post script
 # the %post script attempts to restart systemd services, which fails in container builds
+curl -fsSL "$DAEMON_URL" -o /tmp/opensnitch-daemon.rpm
+
+rpmkeys --checksig -v /tmp/opensnitch-daemon.rpm || true
+
+rpm -qa 'gpg-pubkey*'
 rpm -Uvh --nopost "${DAEMON_URL}"
