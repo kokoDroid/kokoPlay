@@ -1,14 +1,14 @@
 [kdeglobals][KDE]
-widgetStyle=Breeze
+widgetStyle=oxygen
 
 [kdeglobals][General]
-ColorScheme=Vapor
+ColorScheme=OxygenDark
 
 [kdeglobals][Icons]
-Theme=breeze-dark
+Theme=oxygen
 
 [plasmarc][Theme]
-name=Vapor
+name=oxygen
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors
@@ -20,7 +20,7 @@ LayoutName=org.kde.breeze.desktop
 LayoutName=org.kde.breeze.desktop
 
 [kwinrc][org.kde.kdecoration2]
-library=org.kde.breeze
+library=org.kde.oxygen
 
 [KSplash]
 Theme=com.kokoplay.desktop
