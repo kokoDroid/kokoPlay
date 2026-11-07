@@ -47,4 +47,5 @@ curl -fsSL "$DAEMON_URL" -o /tmp/opensnitch-daemon.rpm
 rpmkeys --checksig -v /tmp/opensnitch-daemon.rpm || true
 
 rpm -qa 'gpg-pubkey*'
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-OPENSNITCH
 rpm -Uvh --nopost "${DAEMON_URL}"

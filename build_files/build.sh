@@ -86,6 +86,9 @@ mkdir -p /etc/systemd/user
 
 #keys
 #sed -i 's|^gpgkey=file:///etc/pki/rpm-gpg/|gpgkey=https://raw.githubusercontent.com/kokoDroid/kokoPlay/main/disk_config/rpm-gpg/|' /etc/yum.repos.d/terra*.repo
-
+# OpenSnitch GPG key
+install -Dm644 \
+    /ctx/disk_config/rpm-gpg/RPM-GPG-KEY-OPENSNITCH \
+    /etc/pki/rpm-gpg/RPM-GPG-KEY-OPENSNITCH
 
 systemctl enable podman.socket
