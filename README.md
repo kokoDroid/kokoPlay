@@ -10,7 +10,7 @@ Work in progress.
 
 ## Base System
 
-It is based on Bazzite 44 (KDE version)
+It is based on Bazzite 45 (KDE version)
 
 ## Features
 
@@ -47,12 +47,7 @@ Multiuser Nix package manager is preinstalled.
 
 It also adds just files to install selected flatpaks and brews.
 It adds support to map directories from Local NAS and mount them during boot. 
-Proton drive support added (alpha). 
-Now you can mount proton disk manually or automatically during boot.
-Plan is to add support for sync and backup features, so it is work in progress.
-Read me file will be updated during progress.
-(Update: Proton started to use captcha which rclone does not support.
-Proton Drive may not be usable anymore.)
+
 
 Just recipes:
 
