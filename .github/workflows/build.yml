@@ -15,7 +15,8 @@ on:
       - '.github/workflows/cleanup-packages.yml'
       - '.github/workflows/build-disk.yml'
       - '.github/workflows/make-release.yml'
-      - '.github/workflows/build.yml' 
+      - '.github/workflows/build.yml'
+      - 'Containerfile.iso' 
   workflow_dispatch:
     inputs:
       build_variants:
