@@ -107,6 +107,15 @@ RUN printf '%s\n' \
     'ReserveVT=2' \
     > /usr/lib/systemd/logind.conf.d/anaconda-shell.conf
 
+RUN mkdir -p /etc/NetworkManager/conf.d && \
+    cat > /etc/NetworkManager/conf.d/90-disable-wifi-mac-randomization.conf <<'EOF'
+[device]
+wifi.scan-rand-mac-address=no
+
+[connection]
+wifi.cloned-mac-address=permanent
+EOF
+   
 # Generate the Anaconda initramfs.
 RUN set -eux; \
     mkdir -p "$(realpath /root)"; \
