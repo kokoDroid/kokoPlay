@@ -102,8 +102,8 @@ RUN set -eux; \
     DRACUT_NO_XATTR=1 dracut --force -v --zstd --reproducible --no-hostonly \
         --add "anaconda" \
         --add-drivers "iwlwifi iwlmvm rtl8723be rtl_pci rtlwifi rtw88_pci rtw89_pci ath9k ath10k_pci ath11k_pci mt76x2e mt7921e brcmfmac b43" \
-        "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}" \
-        echo "=== Verifying Wi-Fi drivers in initramfs ===" \
+        "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"; \
+        echo "=== Verifying Wi-Fi drivers in initramfs ==="; \
         lsinitrd "/usr/lib/modules/${kernel}/initramfs.img" \
             | grep -Ei 'iwlwifi|rtl8723be|rtw88|rtw89|ath9k|ath10k|ath11k|mt76|mt7921|brcmfmac|b43'
 
