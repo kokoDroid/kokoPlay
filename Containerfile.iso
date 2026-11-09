@@ -38,6 +38,19 @@ RUN set -eux; \
         pciutils \
         usbutils \
         rfkill \
+        iwlwifi-mvm-firmware \
+        iwlwifi-dvm-firmware \
+        iwlwifi-mld-firmware \
+        iwlegacy-firmware \
+        realtek-firmware \
+        atheros-firmware \
+        brcmfmac-firmware \
+        mediatek-firmware \
+        mt7xxx-firmware \
+        libertas-firmware \
+        atmel-firmware \
+        nxpwireless-firmware \
+        tiwilink-firmware \
         default-fonts-core-sans \
         default-fonts-other-sans \
         google-noto-sans-cjk-fonts \
