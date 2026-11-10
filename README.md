@@ -96,6 +96,7 @@ For nvidia RTX 20xx and newer use latest image from
 <https://sourceforge.net/projects/kokoplayos/files/Releases/nvidia-open/>
 
 Every image has sha256.txt for verification.
+ISO image,starting from 1.2.x, does not contain kokoPlay OS, but it will be downloaded during installation.
 
 Please use Fedora Image Writer to make bootable ISO disk and install KokoPlay OS.
 
