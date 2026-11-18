@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import shlex
+import shutil
 import sys
 import threading
 from pathlib import Path
@@ -71,19 +72,63 @@ def initialize_gtk():
         print(f"Warning: Could not set app icon: {e}")
 
 
-def build_terminal_command(script):
-    """Return the default terminal launcher command."""
-    return [
-        "xdg-terminal-exec",
-        f"--app-id={APP_ID}",
-        f"--title={APP_TITLE}",
-        "--",
-        "bash",
-        "--noprofile",
-        "--norc",
-        "-lc",
-        script,
+def build_terminal_command(script, title=None):
+    """Build a visible terminal command and keep it open after the job exits."""
+    title = title or APP_TITLE
+
+    # KokoPlay uses KDE Plasma, so prefer Konsole and keep the window open.
+    konsole = shutil.which("konsole")
+    if konsole:
+        return [
+            konsole,
+            "--separate",
+            "--hold",
+            f"--title={title}",
+            "-e",
+            "bash",
+            "--noprofile",
+            "--norc",
+            "-lc",
+            script,
+        ]
+
+    # Other terminal launchers may close as soon as the command exits.
+    # Pause at the end so the user can inspect output and error messages.
+    keep_open_script = (
+        script
+        + '\nrc=$?; printf \'\n\nCommand finished with exit code %s.\n\' "$rc"; '
+        + 'read -r -p \'Press Enter to close this terminal...\' _; exit "$rc"'
+    )
+    xdg_terminal = shutil.which("xdg-terminal-exec")
+    if xdg_terminal:
+        return [
+            xdg_terminal,
+            f"--app-id={APP_ID}",
+            f"--title={title}",
+            "--",
+            "bash",
+            "--noprofile",
+            "--norc",
+            "-lc",
+            keep_open_script,
+        ]
+
+    candidates = [
+        ("ptyxis", ["--", "bash", "--noprofile", "--norc", "-lc", keep_open_script]),
+        ("kgx", ["--", "bash", "--noprofile", "--norc", "-lc", keep_open_script]),
+        ("gnome-terminal", ["--", "bash", "--noprofile", "--norc", "-lc", keep_open_script]),
+        ("xfce4-terminal", ["--disable-server", "--command", "bash --noprofile --norc -lc " + shlex.quote(keep_open_script)]),
+        ("xterm", ["-e", "bash", "--noprofile", "--norc", "-lc", keep_open_script]),
     ]
+    for executable, args in candidates:
+        path = shutil.which(executable)
+        if path:
+            return [path, *args]
+
+    raise FileNotFoundError(
+        "No supported terminal was found (Konsole, xdg-terminal-exec, "
+        "Ptyxis, GNOME Console, XFCE Terminal, or xterm)."
+    )
 
 
 def build_headless_command(script):
@@ -134,6 +179,8 @@ class YaftiGTK(Gtk.Window):
 
         # Add tabs for each screen from YAML
         for screen in self.screens:
+            if screen.get('hidden', False):
+                continue
             page = self.create_screen_page(screen)
             label = Gtk.Label(label=screen.get('title', 'Tab'))
             self.notebook.append_page(page, label)
@@ -800,12 +847,13 @@ NoDisplay=false
         )
 
     def launch_terminal(self, script):
-        """Attempt to run a command in a terminal. Returns None on success."""
+        """Open a terminal window, run the command, and leave its output visible."""
         try:
-            subprocess.Popen(build_terminal_command(script))
+            command = build_terminal_command(script)
+            subprocess.Popen(command, start_new_session=True)
             return None
-        except FileNotFoundError:
-            return "The default terminal launcher (xdg-terminal-exec) was not found."
+        except FileNotFoundError as e:
+            return str(e)
         except Exception as e:
             return f"Terminal launch failed: {e}"
 
