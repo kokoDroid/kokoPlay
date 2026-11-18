@@ -6,6 +6,7 @@ Yafti GTK - A simple GTK GUI for running scripts from yafti.yml
 import json
 import os
 import subprocess
+import shlex
 import sys
 import threading
 from pathlib import Path
@@ -14,7 +15,7 @@ import gi
 import yaml
 
 gi.require_version('Gtk', '4.0')
-from gi.repository import GLib, Gtk
+from gi.repository import GLib, Gtk, Gio
 
 # Constants
 APP_ID = 'io.github.ublue_os.yafti_gtk'
@@ -27,6 +28,9 @@ AUTOSTART_DESKTOP_FILENAME = f"{APP_ID}.desktop"
 AUTOSTART_DIR = Path.home() / '.config' / 'autostart'
 AUTOSTART_STATE_DIR = Path.home() / '.config' / 'yafti-gtk'
 AUTOSTART_STATE_FILE = AUTOSTART_STATE_DIR / 'autostart_state.json'
+PROTON_PATHS_FILE = AUTOSTART_STATE_DIR / 'proton_drive_paths.json'
+PROTON_SYNC_SCRIPT = '/usr/libexec/proton-sync'
+PROTON_BISYNC_SCRIPT = '/usr/libexec/proton-bisync'
 
 
 def set_widget_margins(widget, top=10, bottom=10, start=10, end=10):
@@ -178,6 +182,9 @@ class YaftiGTK(Gtk.Window):
 
     def create_screen_page(self, screen):
         """Create a page for a screen with all its actions."""
+        if screen.get('type') == 'proton_drive_sync':
+            return self.create_proton_drive_page(screen)
+
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
 
@@ -190,6 +197,147 @@ class YaftiGTK(Gtk.Window):
 
         scrolled.set_child(page_box)
         return scrolled
+
+    def load_proton_paths(self):
+        """Load the last-used Proton Drive paths."""
+        defaults = {'local': str(Path.home() / 'ProtonDrive'), 'remote': '/my-files'}
+        try:
+            with PROTON_PATHS_FILE.open('r', encoding='utf-8') as f:
+                saved = json.load(f)
+            if isinstance(saved, dict):
+                defaults.update({k: v for k, v in saved.items() if k in defaults and isinstance(v, str)})
+        except (OSError, ValueError):
+            pass
+        return defaults
+
+    def save_proton_paths(self, local_path, remote_path):
+        """Persist the selected Proton Drive paths for the next launch."""
+        AUTOSTART_STATE_DIR.mkdir(parents=True, exist_ok=True)
+        with PROTON_PATHS_FILE.open('w', encoding='utf-8') as f:
+            json.dump({'local': local_path, 'remote': remote_path}, f, indent=2)
+
+    def create_proton_drive_page(self, screen):
+        """Build the Proton Drive one-way sync and two-way bisync controls."""
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        set_widget_margins(root, 16, 16, 16, 16)
+
+        heading = Gtk.Label()
+        heading.set_markup('<b>Proton Drive directory synchronization</b>')
+        heading.set_xalign(0)
+        root.append(heading)
+
+        description = Gtk.Label(label=(
+            'Choose the local directory and the corresponding Proton Drive directory. '
+            'Sync uploads local changes; Bisync synchronizes changes in both directions.'
+        ))
+        description.set_xalign(0)
+        description.set_wrap(True)
+        description.get_style_context().add_class('dim-label')
+        root.append(description)
+
+        paths = self.load_proton_paths()
+
+        local_label = Gtk.Label(label='Local directory')
+        local_label.set_xalign(0)
+        root.append(local_label)
+        local_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        local_entry = Gtk.Entry()
+        local_entry.set_hexpand(True)
+        local_entry.set_text(paths['local'])
+        local_entry.set_placeholder_text('/home/user/ProtonDrive')
+        local_row.append(local_entry)
+        browse_button = Gtk.Button(label='Browse…')
+        browse_button.connect('clicked', self.on_proton_browse_local, local_entry)
+        local_row.append(browse_button)
+        root.append(local_row)
+
+        remote_label = Gtk.Label(label='Remote Proton Drive directory')
+        remote_label.set_xalign(0)
+        root.append(remote_label)
+        remote_entry = Gtk.Entry()
+        remote_entry.set_text(paths['remote'])
+        remote_entry.set_placeholder_text('/my-files')
+        root.append(remote_entry)
+
+        button_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        sync_button = Gtk.Button(label='Run proton-sync')
+        sync_button.set_hexpand(True)
+        sync_button.add_css_class('suggested-action')
+        sync_button.connect('clicked', self.on_proton_sync_clicked, local_entry, remote_entry, PROTON_SYNC_SCRIPT)
+        button_row.append(sync_button)
+
+        bisync_button = Gtk.Button(label='Run proton-bisync')
+        bisync_button.set_hexpand(True)
+        bisync_button.connect('clicked', self.on_proton_sync_clicked, local_entry, remote_entry, PROTON_BISYNC_SCRIPT)
+        button_row.append(bisync_button)
+        root.append(button_row)
+
+        note = Gtk.Label(label='The directory values are remembered on this computer. Remote paths are Proton Drive paths, for example /my-files.')
+        note.set_xalign(0)
+        note.set_wrap(True)
+        note.get_style_context().add_class('dim-label')
+        root.append(note)
+
+        scrolled.set_child(root)
+        return scrolled
+
+    def on_proton_browse_local(self, _button, entry):
+        """Open a native directory chooser for the local directory."""
+        chooser = Gtk.FileChooserNative.new(
+            'Select local Proton Drive directory', self,
+            Gtk.FileChooserAction.SELECT_FOLDER, 'Select', 'Cancel'
+        )
+        current = entry.get_text().strip()
+        if current and Path(current).expanduser().is_dir():
+            chooser.set_current_folder(Gio.File.new_for_path(str(Path(current).expanduser())))
+
+        def on_response(dialog, response):
+            if response == Gtk.ResponseType.ACCEPT:
+                selected = dialog.get_file()
+                if selected and selected.get_path():
+                    entry.set_text(selected.get_path())
+            dialog.destroy()
+
+        chooser.connect('response', on_response)
+        chooser.show()
+
+    def on_proton_sync_clicked(self, _button, local_entry, remote_entry, script_path):
+        """Validate paths, persist them, and launch the selected sync command."""
+        local_path = local_entry.get_text().strip()
+        remote_path = remote_entry.get_text().strip()
+
+        if not local_path or not remote_path:
+            show_error_dialog(self, 'Missing directory', 'Enter both the local and remote directory paths.')
+            return
+
+        local_path = str(Path(local_path).expanduser())
+        if not Path(local_path).is_dir():
+            show_error_dialog(self, 'Invalid local directory', f'The local directory does not exist or is not a directory:\n{local_path}')
+            return
+        if not remote_path.startswith('/'):
+            show_error_dialog(self, 'Invalid remote directory', 'The Proton Drive directory must be an absolute remote path, for example /my-files.')
+            return
+        if not Path(script_path).is_file():
+            show_error_dialog(self, 'Script not found', f'Cannot find {script_path}.')
+            return
+
+        try:
+            self.save_proton_paths(local_path, remote_path)
+        except OSError as e:
+            show_error_dialog(self, 'Could not save directories', str(e))
+            return
+
+        command = ' '.join(shlex.quote(part) for part in (script_path, local_path, remote_path))
+        error_message = self.launch_terminal(command)
+        if error_message is not None:
+            show_error_dialog(
+                self, 'No terminal available',
+                'Could not open a terminal automatically.\n\n' + error_message +
+                '\n\nYou can run this command manually:\n\n' + command
+            )
 
     def create_action_item(self, action):
         """Create a clickable action item."""

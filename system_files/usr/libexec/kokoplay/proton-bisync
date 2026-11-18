@@ -1,0 +1,613 @@
+#!/usr/bin/env python3
+"""
+proton-bisync: Bidirectional synchronization with Proton Drive.
+
+Usage:
+    proton-bisync [OPTIONS] [LOCAL_DIR] [REMOTE_DIR]
+
+Defaults:
+    LOCAL_DIR  = /home/$USER/ProtonDrive
+    REMOTE_DIR = /my-files
+
+Conflict resolution:
+    Newer modification time wins.
+    Equal timestamps with simultaneous changes are preserved on both sides.
+
+Deletion:
+    Propagated in both directions, based on previous synchronization state.
+
+Authentication:
+    Existing Proton Drive browser authentication is reused.
+    No automatic login or logout.
+"""
+
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+from pathlib import Path, PurePosixPath
+from datetime import datetime, timezone
+
+
+PROGRAM = "proton-bisync"
+USER = os.environ.get("USER") or os.environ.get("LOGNAME") or "unknown"
+
+DEFAULT_LOCAL = Path(f"/home/{USER}/ProtonDrive")
+DEFAULT_REMOTE = "/my-files"
+
+STATE_ROOT = Path(
+    os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")
+) / PROGRAM
+
+
+class SyncError(Exception):
+    pass
+
+
+def log(message):
+    print(f"[{PROGRAM}] {message}")
+
+
+def die(message):
+    raise SyncError(message)
+
+
+def run_cli(*args):
+    """Execute Proton Drive CLI without a shell."""
+
+    command = ["proton-drive", *args]
+
+    result = subprocess.run(
+        command,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    if result.returncode != 0:
+        die(
+            f"Command failed: {' '.join(command)}\n"
+            f"{result.stderr.strip()}"
+        )
+
+    return result.stdout
+
+
+def run_json(*args):
+    output = run_cli(*args)
+
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError as exc:
+        die(f"Invalid JSON returned by Proton Drive: {exc}")
+
+
+def normalize_remote(path):
+    if not path.startswith("/"):
+        die("Remote path must be absolute.")
+
+    if "//" in path or ".." in PurePosixPath(path).parts:
+        die("Invalid remote path.")
+
+    if path == "/":
+        return "/my-files"
+
+    if path == "/my-files" or path.startswith("/my-files/"):
+        return path.rstrip("/")
+
+    # Short absolute paths are relative to the personal Drive root.
+    if path in ("/devices", "/shared-with-me",
+                "/shared-by-me", "/trash", "/albums", "/photos"):
+        die("This script only synchronizes your personal Drive.")
+
+    return "/my-files" + path.rstrip("/")
+
+
+def remote_join(parent, name):
+    if "/" in name or not name:
+        die(f"Unsupported remote filename: {name!r}")
+
+    # Proton uses POSIX paths and supports escaping slash in names.
+    return parent.rstrip("/") + "/" + name.replace("/", r"\/")
+
+
+def timestamp(value):
+    if not value:
+        return None
+
+    try:
+        return datetime.fromisoformat(
+            value.replace("Z", "+00:00")
+        ).timestamp()
+    except (ValueError, TypeError):
+        return None
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+
+    return digest.hexdigest()
+
+
+def local_fingerprint(path):
+    stat = path.stat()
+
+    return {
+        "sha256": sha256_file(path),
+        "size": stat.st_size,
+        "mtime_ns": stat.st_mtime_ns,
+    }
+
+
+def remote_metadata(path):
+    return run_json("filesystem", "info", "--json", path)
+
+
+def remote_fingerprint(entry):
+    revision = entry.get("activeRevision") or {}
+
+    claimed = revision.get("claimedModificationTime")
+    modified = entry.get("modificationTime")
+
+    return {
+        "revision": revision.get("uid") or entry.get("uid"),
+        "size": entry.get("totalStorageSize"),
+        "mtime": claimed or modified,
+        "mtime_epoch": timestamp(claimed or modified),
+    }
+
+
+
+def local_mtime(path):
+    return path.stat().st_mtime
+
+
+def remote_mtime(metadata):
+    return metadata.get("mtime_epoch")
+
+
+def scan_local(root):
+    result = {}
+
+    for directory, _, filenames in os.walk(root, followlinks=False):
+        for filename in filenames:
+            path = Path(directory) / filename
+
+            if path.is_symlink():
+                die(f"Symbolic links are not supported: {path}")
+
+            relative = path.relative_to(root).as_posix()
+            result[relative] = path
+
+    return result
+
+
+def scan_remote(folder, relative=""):
+    result = {}
+    log(f"Scanning remote folder: {folder}")
+    entries = run_json("filesystem", "list", "--json", folder)
+
+    if not isinstance(entries, list):
+        die(f"Unexpected directory listing: {folder}")
+
+    for entry in entries:
+        name_info = entry.get("name") or {}
+
+        if not name_info.get("ok"):
+            die(f"Cannot decrypt remote filename in {folder}")
+
+        name = name_info.get("value")
+
+        if not isinstance(name, str) or "/" in name:
+            die(f"Unsupported remote filename: {name!r}")
+
+        rel = f"{relative}/{name}" if relative else name
+        remote_path = remote_join(folder, name)
+
+        node_type = entry.get("type")
+
+        if node_type == "folder":
+            scan = scan_remote(remote_path, rel)
+            result.update(scan)
+
+        elif node_type == "file":
+            result[rel] = {
+                "path": remote_path,
+                "metadata": remote_fingerprint(entry),
+            }
+
+        else:
+            log(f"Skipping unsupported remote node: {rel}")
+
+    return result
+
+
+def ensure_remote_folder(path):
+    if path == "/my-files":
+        return
+
+    try:
+        run_json("filesystem", "list", "--json", path)
+        return
+    except SyncError:
+        pass
+
+    parent = str(PurePosixPath(path).parent)
+    name = PurePosixPath(path).name
+
+    ensure_remote_folder(parent)
+
+    log(f"Creating remote folder: {path}")
+
+    run_cli("filesystem", "create-folder", parent, name)
+
+
+def ensure_local_parent(path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def upload(local_path, remote_parent):
+    ensure_remote_folder(remote_parent)
+
+    log(f"UPLOAD   {local_path}")
+
+    run_cli(
+        "filesystem", "upload",
+        "--file-conflict-strategy", "replace",
+        "--folder-conflict-strategy", "merge",
+        str(local_path),
+        remote_parent,
+    )
+
+
+def download(remote_path, local_path):
+    ensure_local_parent(local_path)
+
+    log(f"DOWNLOAD {remote_path}")
+
+    run_cli(
+        "filesystem", "download",
+        "--file-conflict-strategy", "remove",
+        remote_path,
+        str(local_path.parent),
+    )
+
+
+def delete_remote(remote_path):
+    log(f"DELETE REMOTE {remote_path}")
+    run_cli("filesystem", "trash", remote_path)
+
+
+def delete_local(local_path):
+    log(f"DELETE LOCAL  {local_path}")
+    local_path.unlink()
+
+
+def relative_remote_path(root, relative):
+    result = root
+
+    for component in PurePosixPath(relative).parts:
+        result = remote_join(result, component)
+
+    return result
+
+
+def state_key(local_root, remote_root):
+    value = f"{local_root}\0{remote_root}"
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
+def load_state(path):
+    if not path.exists():
+        return {}
+
+    try:
+        return json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        die(f"Cannot read synchronization state: {path}")
+
+
+def save_state(path, state):
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    fd, temporary = tempfile.mkstemp(
+        prefix=".proton-bisync-",
+        dir=path.parent,
+    )
+
+    try:
+        with os.fdopen(fd, "w") as file:
+            json.dump(state, file, indent=2)
+            file.flush()
+            os.fsync(file.fileno())
+
+        os.replace(temporary, path)
+
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Bidirectional Proton Drive synchronization."
+    )
+
+    parser.add_argument(
+        "-n", "--dry-run",
+        action="store_true",
+        help="Show planned operations without modifying files.",
+    )
+
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Show additional information.",
+    )
+
+    parser.add_argument(
+        "local",
+        nargs="?",
+        default=str(DEFAULT_LOCAL),
+    )
+
+    parser.add_argument(
+        "remote",
+        nargs="?",
+        default=DEFAULT_REMOTE,
+    )
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        log("Verbose mode enabled.")
+
+    local_root = Path(args.local).expanduser().resolve()
+    remote_root = normalize_remote(args.remote)
+
+    if not local_root.is_dir():
+        die(f"Local directory does not exist: {local_root}")
+
+    if not os.access(local_root, os.R_OK | os.W_OK):
+        die(f"Local directory is not readable/writable: {local_root}")
+
+    log(f"Local:  {local_root}")
+    log(f"Remote: {remote_root}")
+
+    if not shutil_which("proton-drive"):
+        die("proton-drive executable not found.")
+
+    # State and lock are separate for each local/remote pair.
+    key = state_key(local_root, remote_root)
+
+    state_dir = STATE_ROOT / key
+    state_file = state_dir / "state.json"
+    lock_file = state_dir / "lock"
+
+    state_dir.mkdir(parents=True, exist_ok=True)
+
+    with lock_file.open("w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            die("Another synchronization process is running.")
+
+        # Verify existing browser authentication.
+        run_cli("filesystem", "list", remote_root)
+
+        log("Scanning local directory...")
+        local = scan_local(local_root)
+
+        log("Scanning Proton Drive...")
+        remote = scan_remote(remote_root)
+
+        previous = load_state(state_file)
+
+        first_run = not previous
+
+        if first_run:
+            log("First run: establishing synchronization baseline.")
+            log("No deletion propagation will occur on the first run.")
+
+        operations = []
+
+        all_paths = sorted(
+            set(local) | set(remote) | set(previous),
+            key=lambda p: (p.count("/"), p),
+        )
+
+        for relative in all_paths:
+            local_path = local_root / relative
+            remote_item = remote.get(relative)
+
+            local_exists = relative in local
+            remote_exists = remote_item is not None
+            # Initial synchronization: do not overwrite files that
+            # already exist on both sides without a known baseline.
+            if first_run:
+                if local_exists and remote_exists:
+                    continue
+
+                if local_exists:
+                    operations.append(("upload", relative))
+                elif remote_exists:
+                    operations.append(("download", relative))
+
+                continue
+            old = previous.get(relative, {})
+
+            old_local = old.get("local")
+            old_remote = old.get("remote")
+
+            current_local = (
+                local_fingerprint(local_path)
+                if local_exists else None
+            )
+
+            current_remote = (
+                remote_item["metadata"]
+                if remote_exists else None
+            )
+
+            if local_exists and remote_exists:
+                local_changed = (
+                    old_local is None or current_local != old_local
+                )
+
+                remote_changed = (
+                    old_remote is None or current_remote != old_remote
+                )
+
+                if not local_changed and not remote_changed:
+                    continue
+
+                if local_changed and not remote_changed:
+                    operations.append(("upload", relative))
+                    continue
+
+                if remote_changed and not local_changed:
+                    operations.append(("download", relative))
+                    continue
+
+                # Both sides changed, or this is the initial baseline.
+                local_time = local_mtime(local_path)
+                remote_time = remote_mtime(current_remote)
+
+                if remote_time is None:
+                    log(
+                        f"CONFLICT {relative}: remote timestamp unavailable; "
+                        "preserving both copies."
+                    )
+                    continue
+
+                difference = local_time - remote_time
+
+                if abs(difference) < 1.0:
+                    log(
+                        f"CONFLICT {relative}: equal/near-equal timestamps; "
+                        "preserving both copies."
+                    )
+                    continue
+
+                if difference > 0:
+                    operations.append(("upload", relative))
+                else:
+                    operations.append(("download", relative))
+
+                continue
+
+            if local_exists and not remote_exists:
+                if first_run or old_remote is None:
+                    operations.append(("upload", relative))
+                    continue
+
+                if current_local != old_local:
+                    # Local copy changed after remote deletion.
+                    operations.append(("upload", relative))
+                else:
+                    operations.append(("delete_local", relative))
+
+                continue
+
+            if remote_exists and not local_exists:
+                if first_run or old_local is None:
+                    operations.append(("download", relative))
+                    continue
+
+                if current_remote != old_remote:
+                    # Remote copy changed after local deletion.
+                    operations.append(("download", relative))
+                else:
+                    operations.append(("delete_remote", relative))
+
+                continue
+
+            # Deleted on both sides.
+            if not local_exists and not remote_exists:
+                continue
+
+        if args.dry_run:
+            log("DRY RUN: planned operations:")
+
+            for operation, relative in operations:
+                print(f"  {operation:14} {relative}")
+
+            log(f"{len(operations)} operations planned.")
+            return
+
+        # Execute changes. State is saved only after successful completion.
+        for operation, relative in operations:
+            local_path = local_root / relative
+
+            remote_path = relative_remote_path(
+                remote_root, relative
+            )
+
+            remote_parent = str(PurePosixPath(remote_path).parent)
+
+            if operation == "upload":
+                upload(local_path, remote_parent)
+
+            elif operation == "download":
+                download(remote_path, local_path)
+
+            elif operation == "delete_local":
+                delete_local(local_path)
+
+            elif operation == "delete_remote":
+                delete_remote(remote_path)
+
+        # Re-scan after all operations and save a fresh baseline.
+        log("Updating synchronization state...")
+
+        local = scan_local(local_root)
+        remote = scan_remote(remote_root)
+
+        new_state = {}
+
+        for relative in sorted(set(local) | set(remote)):
+            local_fp = (
+                local_fingerprint(local[relative])
+                if relative in local else None
+            )
+
+            remote_fp = (
+                remote[relative]["metadata"]
+                if relative in remote else None
+            )
+
+            new_state[relative] = {
+                "local": local_fp,
+                "remote": remote_fp,
+            }
+
+        save_state(state_file, new_state)
+
+        log("Synchronization completed successfully.")
+        log(f"Processed {len(operations)} operations.")
+        log(f"State: {state_file}")
+
+
+def shutil_which(command):
+    from shutil import which
+    return which(command)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except SyncError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\nSynchronization interrupted.", file=sys.stderr)
+        sys.exit(130)

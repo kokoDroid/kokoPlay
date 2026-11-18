@@ -44,7 +44,8 @@ screens:
             label: "Always Randomize"
             script: "ujust kokoplay-randomize-mac-always"
       
-  - title: "Proton Drive"
+  - title: "Proton Drive-deprecated"
+    hidden: true
     description: "Proton drive mounting and configuration"
     actions:
       - id: "kokoplay-proton-help"
@@ -95,3 +96,5 @@ screens:
         description: "Deletes all configs, secrets, and mounts related to Proton Drive mounting. Use this to start fresh"
         default: false
         script: "ujust kokoplay-proton-cleanup"
+  - title: Proton Drive Sync
+    type: proton_drive_sync
