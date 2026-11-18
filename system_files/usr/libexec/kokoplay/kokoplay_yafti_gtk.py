@@ -30,8 +30,8 @@ AUTOSTART_DIR = Path.home() / '.config' / 'autostart'
 AUTOSTART_STATE_DIR = Path.home() / '.config' / 'yafti-gtk'
 AUTOSTART_STATE_FILE = AUTOSTART_STATE_DIR / 'autostart_state.json'
 PROTON_PATHS_FILE = AUTOSTART_STATE_DIR / 'proton_drive_paths.json'
-PROTON_SYNC_SCRIPT = '/usr/libexec/proton-sync'
-PROTON_BISYNC_SCRIPT = '/usr/libexec/proton-bisync'
+PROTON_SYNC_SCRIPT = '/usr/libexec/kokoplay/proton-sync'
+PROTON_BISYNC_SCRIPT = '/usr/libexec/kokoplay/proton-bisync'
 
 
 def set_widget_margins(widget, top=10, bottom=10, start=10, end=10):
