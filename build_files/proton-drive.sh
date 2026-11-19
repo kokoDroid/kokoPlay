@@ -9,5 +9,8 @@ curl -fL "$URL" -o /tmp/proton-drive
 echo "${SHA512}  /tmp/proton-drive" | sha512sum -c -
 
 install -D -m 0755 /tmp/proton-drive /usr/localbin/proton-drive
-
+echo "=== PROTON DRIVE POST-INSTALL ==="
+ls -l /usr/local/bin/proton-drive
+file /usr/local/bin/proton-drive
+/usr/local/bin/proton-drive version
 rm -f /tmp/proton-drive
