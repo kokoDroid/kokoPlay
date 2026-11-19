@@ -1,0 +1,225 @@
+
+#!/usr/bin/env bash
+#
+# proton-sync - One-way local-to-Proton-Drive synchronization
+#
+# Usage:
+#   proton-sync [OPTIONS] [LOCAL_DIR] [REMOTE_DIR]
+#
+# Defaults:
+#   LOCAL_DIR  = /home/$USER/ProtonDrive
+#   REMOTE_DIR = /my-files
+#
+# Remote conflicts:
+#   Files   = replace
+#   Folders = merge
+#
+# Remote-only files are never deleted.
+
+set -Eeuo pipefail
+
+PROGRAM="${0##*/}"
+USER_NAME="${USER:-$(id -un)}"
+
+DEFAULT_LOCAL="/home/${USER_NAME}/ProtonDrive"
+DEFAULT_REMOTE="/my-files"
+
+DRY_RUN=false
+VERBOSE=false
+
+usage() {
+    cat <<EOF
+Usage: $PROGRAM [OPTIONS] [LOCAL_DIR] [REMOTE_DIR]
+
+Options:
+  -n, --dry-run     Show what would be uploaded without uploading
+  -v, --verbose     Enable Proton Drive verbose output
+  -h, --help        Show this help
+
+Arguments:
+  LOCAL_DIR         Local directory (default: $DEFAULT_LOCAL)
+  REMOTE_DIR        Proton Drive directory (default: /)
+
+Examples:
+  $PROGRAM
+  $PROGRAM ~/Documents /Documents
+  $PROGRAM ~/Pictures /Photos
+  $PROGRAM --dry-run ~/Documents /Documents
+EOF
+}
+
+die() {
+    echo "Error: $*" >&2
+    exit 1
+}
+
+log() {
+    printf '[proton-sync] %s\n' "$*"
+}
+
+# Parse arguments
+ARGS=()
+
+while (($#)); do
+    case "$1" in
+        -n|--dry-run)
+            DRY_RUN=true
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            ARGS+=("$@")
+            break
+            ;;
+        -*)
+            die "Unknown option: $1"
+            ;;
+        *)
+            ARGS+=("$1")
+            ;;
+    esac
+    shift
+done
+
+((${#ARGS[@]} <= 2)) || die "Too many arguments. See --help."
+
+LOCAL_DIR="${ARGS[0]:-$DEFAULT_LOCAL}"
+REMOTE_DIR="${ARGS[1]:-$DEFAULT_REMOTE}"
+
+# Expand local directory
+LOCAL_DIR="${LOCAL_DIR/#\~/$HOME}"
+
+[[ -d "$LOCAL_DIR" ]] || die "Local directory does not exist: $LOCAL_DIR"
+[[ -r "$LOCAL_DIR" ]] || die "Cannot read local directory: $LOCAL_DIR"
+
+LOCAL_DIR="$(cd -- "$LOCAL_DIR" && pwd -P)"
+
+# Normalize remote directory
+[[ "$REMOTE_DIR" == /* ]] || die "Remote path must be absolute."
+
+# Proton Drive's virtual root is not an upload destination.
+[[ "$REMOTE_DIR" != "/" ]] || REMOTE_DIR="/my-files"
+
+# Remove trailing slash
+while [[ "$REMOTE_DIR" != "/" && "$REMOTE_DIR" == */ ]]; do
+    REMOTE_DIR="${REMOTE_DIR%/}"
+done
+
+# Reject ambiguous path components
+[[ "$REMOTE_DIR" != *"//"* ]] || die "Invalid remote path."
+[[ "/$REMOTE_DIR/" != *"/../"* ]] || die "Remote path cannot contain '..'."
+[[ "/$REMOTE_DIR/" != *"/./"* ]] || die "Remote path cannot contain '.'."
+
+# Build CLI command
+CLI=(proton-drive)
+
+if $VERBOSE; then
+    CLI+=(--verbose)
+fi
+
+command -v proton-drive >/dev/null 2>&1 ||
+    die "proton-drive executable not found."
+
+log "Local:  $LOCAL_DIR"
+log "Remote: $REMOTE_DIR"
+
+# Check existing authentication.
+# Never initiate login or logout.
+log "Checking Proton Drive connection..."
+
+"${CLI[@]}" filesystem list / >/dev/null ||
+    die "Cannot access Proton Drive. Check your browser-based authentication and connection."
+
+# Ensure remote directory exists.
+ensure_remote_directory() {
+    local path="$1"
+    local parent=""
+    local candidate=""
+    local name=""
+    local part
+    local -a parts
+
+    # Already exists?
+    if "${CLI[@]}" filesystem list "$path" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    IFS='/' read -r -a parts <<< "${path#/}"
+
+    for part in "${parts[@]}"; do
+        [[ -n "$part" ]] || continue
+
+        if [[ -z "$parent" ]]; then
+            candidate="/$part"
+        else
+            candidate="$parent/$part"
+        fi
+
+        if ! "${CLI[@]}" filesystem list "$candidate" >/dev/null 2>&1; then
+
+            if [[ -z "$parent" ]]; then
+                die "Remote root section does not exist: $candidate"
+            fi
+
+            name="$part"
+
+            log "Creating remote directory: $candidate"
+
+            "${CLI[@]}" filesystem create-folder "$parent" "$name" ||
+                die "Cannot create remote directory: $candidate"
+        fi
+
+        parent="$candidate"
+    done
+
+    "${CLI[@]}" filesystem list "$path" >/dev/null 2>&1 ||
+        die "Remote directory unavailable: $path"
+}
+
+# Validate/create destination.
+if $DRY_RUN; then
+    log "Dry-run: remote directory creation disabled."
+else
+    ensure_remote_directory "$REMOTE_DIR"
+fi
+
+# Collect immediate children, including hidden files.
+# NUL delimiters safely handle spaces and special characters.
+ITEMS=()
+
+while IFS= read -r -d '' item; do
+    ITEMS+=("$item")
+done < <(find "$LOCAL_DIR" -mindepth 1 -maxdepth 1 -print0)
+
+if ((${#ITEMS[@]} == 0)); then
+    log "Local directory is empty. Nothing to upload."
+    exit 0
+fi
+
+log "Found ${#ITEMS[@]} local entries."
+
+if $DRY_RUN; then
+    log "Dry-run: following entries would be uploaded:"
+
+    for item in "${ITEMS[@]}"; do
+        printf '  %q\n' "$item"
+    done
+
+    exit 0
+fi
+
+log "Starting upload..."
+
+"${CLI[@]}" filesystem upload \
+    --file-conflict-strategy replace \
+    --folder-conflict-strategy merge \
+    "${ITEMS[@]}" \
+    "$REMOTE_DIR"
+
+log "Upload completed successfully."

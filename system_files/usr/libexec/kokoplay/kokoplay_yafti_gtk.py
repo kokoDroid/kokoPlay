@@ -32,6 +32,7 @@ AUTOSTART_STATE_FILE = AUTOSTART_STATE_DIR / 'autostart_state.json'
 PROTON_PATHS_FILE = AUTOSTART_STATE_DIR / 'proton_drive_paths.json'
 PROTON_SYNC_SCRIPT = '/usr/libexec/kokoplay/proton-sync'
 PROTON_BISYNC_SCRIPT = '/usr/libexec/kokoplay/proton-bisync'
+PROTON_FASTSYNC_SCRIPT = '/usr/libexec/kokoplay/proton-fastsync'
 
 
 def set_widget_margins(widget, top=10, bottom=10, start=10, end=10):
@@ -320,6 +321,12 @@ class YaftiGTK(Gtk.Window):
         bisync_button.set_hexpand(True)
         bisync_button.connect('clicked', self.on_proton_sync_clicked, local_entry, remote_entry, PROTON_BISYNC_SCRIPT)
         button_row.append(bisync_button)
+
+        fastsync_button = Gtk.Button(label='Run proton-fastsync')
+        fastsync_button.set_hexpand(True)
+        fastsync_button.connect('clicked', self.on_proton_sync_clicked, local_entry, remote_entry, PROTON_FASTSYNC_SCRIPT)
+        button_row.append(fastsync_button)
+
         root.append(button_row)
 
         note = Gtk.Label(label='The directory values are remembered on this computer. Remote paths are Proton Drive paths, for example /my-files.')
