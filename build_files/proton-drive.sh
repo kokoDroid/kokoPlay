@@ -8,7 +8,7 @@ SHA512="3533025ba69ae112b64e3e01fbcc1ad0688136a4043f6cf6a72886967d85fdcd9ec23547
 curl -fL "$URL" -o /tmp/proton-drive
 echo "${SHA512}  /tmp/proton-drive" | sha512sum -c -
 
-install -D -m 0755 /tmp/proton-drive /usr/localbin/proton-drive
+install -D -m 0755 /tmp/proton-drive /usr/local/bin/proton-drive
 echo "=== PROTON DRIVE POST-INSTALL ==="
 ls -l /usr/local/bin/proton-drive
 file /usr/local/bin/proton-drive
